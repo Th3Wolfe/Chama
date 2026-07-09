@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import { POLLING_MS } from '../../config/polling';
 import type { Categoria, ChamadoDetalhe, Equipamento, StatusChamado, Usuario } from '../../api/types';
 
+type Aba = 'detalhes' | 'comentarios' | 'anexos' | 'historico';
+
 function formatarDataHora(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
@@ -15,6 +17,20 @@ function formatarTamanho(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Ícone só decorativo pra dar contexto visual rápido ao tipo de problema —
+// não existe campo de ícone no banco, então inferimos por palavras-chave
+// no nome da categoria, com um fallback genérico.
+function iconeCategoria(nomeCategoria?: string): string {
+  const nome = (nomeCategoria || '').toLowerCase();
+  if (nome.includes('impressora')) return '🖨️';
+  if (nome.includes('internet') || nome.includes('rede') || nome.includes('wifi')) return '🌐';
+  if (nome.includes('hardware') || nome.includes('computador') || nome.includes('notebook') || nome.includes('máquina')) return '💻';
+  if (nome.includes('software') || nome.includes('sistema')) return '🧩';
+  if (nome.includes('reposi')) return '🔄';
+  if (nome.includes('e-mail') || nome.includes('email')) return '📧';
+  return '🗂️';
 }
 
 export function ChamadoDetail() {
@@ -37,6 +53,7 @@ export function ChamadoDetail() {
   const [tituloRascunho, setTituloRascunho] = useState('');
   const [descricaoRascunho, setDescricaoRascunho] = useState('');
   const [erroEdicaoChamado, setErroEdicaoChamado] = useState<string | null>(null);
+  const [aba, setAba] = useState<Aba>('detalhes');
 
   async function recarregar() {
     const { data } = await api.get<ChamadoDetalhe>(`/chamados/${id}`);
@@ -194,21 +211,33 @@ export function ChamadoDetail() {
   const souDono = chamado.aberto_por === usuario?.id;
   const podeComentar = isAdmin || souDono;
 
+  const ABAS: { key: Aba; label: string; contagem?: number }[] = [
+    { key: 'detalhes', label: 'Detalhes' },
+    { key: 'comentarios', label: 'Comentários', contagem: chamado.comentarios.length },
+    { key: 'anexos', label: 'Anexos', contagem: chamado.anexos.length },
+    { key: 'historico', label: 'Histórico' },
+  ];
+
   return (
-    <AppLayout titulo={`#${chamado.id} — ${chamado.titulo}`} subtitulo={`Setor: ${chamado.setor_nome} · Aberto por ${chamado.aberto_por_nome}`}>
+    <AppLayout titulo="Chamado" subtitulo="Detalhes, conversa e histórico do chamado">
       <button className="btn btn--secondary" style={{ marginBottom: 16 }} onClick={() => navigate('/chamados')}>
         ← Voltar
       </button>
 
       <div className="grid-2">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="card" style={{ padding: 20 }}>
-            <div className="flex-between" style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <StatusBadge status={chamado.status} />
-                <PrioridadeBadge prioridade={chamado.prioridade_atual} />
+          <div className="card chamado-header">
+            <div className="chamado-header__top">
+              <div className="chamado-header__id">
+                <span className="chamado-header__icon">{iconeCategoria(chamado.categoria_nome)}</span>
+                <div>
+                  <div className="chamado-header__titulo">#{chamado.id} — {chamado.titulo}</div>
+                  <div className="chamado-header__meta">
+                    {formatarDataHora(chamado.criado_em)} · {chamado.aberto_por_nome} · Setor: {chamado.setor_nome}
+                  </div>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 {podeComentar && !editandoChamado && (
                   <button className="btn btn--secondary" disabled={salvando} onClick={iniciarEdicaoChamado}>
                     ✏️ Editar
@@ -221,127 +250,171 @@ export function ChamadoDetail() {
                 )}
               </div>
             </div>
-
-            {editandoChamado ? (
-              <form onSubmit={handleSalvarEdicaoChamado} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div className="form-field">
-                  <label>Título</label>
-                  <input value={tituloRascunho} onChange={(e) => setTituloRascunho(e.target.value)} />
-                </div>
-                <div className="form-field">
-                  <label>Descrição</label>
-                  <textarea
-                    rows={4}
-                    style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: 10, padding: '10px 12px', fontFamily: 'inherit', fontSize: 14, resize: 'vertical' }}
-                    value={descricaoRascunho}
-                    onChange={(e) => setDescricaoRascunho(e.target.value)}
-                  />
-                </div>
-                {erroEdicaoChamado && <p style={{ color: '#F87171', fontSize: 13 }}>{erroEdicaoChamado}</p>}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn--primary" type="submit" disabled={salvando || !tituloRascunho.trim() || !descricaoRascunho.trim()}>
-                    Salvar
-                  </button>
-                  <button className="btn btn--secondary" type="button" disabled={salvando} onClick={cancelarEdicaoChamado}>
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <>
-                <p>{chamado.descricao}</p>
-                {chamado.equipamento_nome && (
-                  <p className="text-muted" style={{ fontSize: 13, marginTop: 10 }}>
-                    🖥️ Equipamento: {chamado.equipamento_nome}
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="card" style={{ padding: 20 }}>
-            <h3 className="card__title" style={{ marginBottom: 12 }}>Conversa</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-              {chamado.comentarios.length === 0 && <p className="text-muted">Nenhum comentário ainda.</p>}
-              {chamado.comentarios.map((c) => (
-                <div key={c.id} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: 10 }}>
-                  <div className="flex-between">
-                    <strong style={{ fontSize: 13 }}>{c.autor_nome}</strong>
-                    <span className="text-muted" style={{ fontSize: 12 }}>{formatarDataHora(c.criado_em)}</span>
-                  </div>
-                  <p style={{ fontSize: 14, margin: '4px 0 0' }}>{c.texto}</p>
-                </div>
-              ))}
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <StatusBadge status={chamado.status} />
+              <PrioridadeBadge prioridade={chamado.prioridade_atual} />
             </div>
-            {podeComentar && (
-              <form onSubmit={handleComentar} style={{ display: 'flex', gap: 8 }}>
-                <input
-                  style={{ flex: 1, border: '1px solid var(--color-border)', borderRadius: 10, padding: '10px 12px' }}
-                  placeholder="Escreva um comentário..."
-                  value={novoComentario}
-                  onChange={(e) => setNovoComentario(e.target.value)}
-                />
-                <button className="btn btn--primary" type="submit" disabled={salvando}>Enviar</button>
-              </form>
-            )}
-          </div>
 
-          <div className="card" style={{ padding: 20 }}>
-            <h3 className="card__title" style={{ marginBottom: 12 }}>Anexos</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-              {chamado.anexos.length === 0 && <p className="text-muted">Nenhum anexo ainda.</p>}
-              {chamado.anexos.map((a) => {
-                const podeExcluir = isAdmin || a.enviado_por === usuario?.id;
-                return (
-                  <div key={a.id} className="flex-between" style={{ fontSize: 14 }}>
-                    <a
-                      href={`${API_URL}/chamados/${chamado.id}/anexos/${a.id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      📎 {a.nome_arquivo} <span className="text-muted">({formatarTamanho(a.tamanho_bytes)})</span>
-                    </a>
-                    {podeExcluir && (
-                      <button
-                        className="btn btn--secondary"
-                        style={{ padding: '2px 10px', fontSize: 12 }}
-                        onClick={() => handleExcluirAnexo(a.id)}
-                      >
-                        Excluir
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {podeComentar && (
-              <form onSubmit={handleEnviarAnexo} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  id="novo-anexo"
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                  onChange={(e) => setNovoAnexo(e.target.files?.[0] ?? null)}
-                />
-                <button className="btn btn--primary" type="submit" disabled={!novoAnexo || enviandoAnexo}>
-                  {enviandoAnexo ? 'Enviando...' : 'Anexar'}
+            <div className="chamado-tabs">
+              {ABAS.map((item) => (
+                <button
+                  key={item.key}
+                  className={`chamado-tabs__item${aba === item.key ? ' chamado-tabs__item--ativo' : ''}`}
+                  onClick={() => setAba(item.key)}
+                >
+                  {item.label}
+                  {item.contagem !== undefined && <span className="chamado-tabs__count">{item.contagem}</span>}
                 </button>
-              </form>
-            )}
-            {erroAnexo && <p style={{ color: '#F87171', fontSize: 13, marginTop: 8 }}>{erroAnexo}</p>}
-          </div>
-
-          <div className="card" style={{ padding: 20 }}>
-            <h3 className="card__title" style={{ marginBottom: 12 }}>Histórico</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {chamado.historico.map((h) => (
-                <div key={h.id} style={{ fontSize: 13 }}>
-                  <span className="text-muted">{formatarDataHora(h.alterado_em)}</span>{' — '}
-                  {h.status_anterior ? `${h.status_anterior} → ${h.status_novo}` : `Chamado criado (${h.status_novo})`}
-                  {' por '}{h.alterado_por_nome}
-                </div>
               ))}
             </div>
           </div>
+
+          {aba === 'detalhes' && (
+            <div className="card" style={{ padding: 20 }}>
+              {editandoChamado ? (
+                <form onSubmit={handleSalvarEdicaoChamado} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div className="form-field">
+                    <label>Título</label>
+                    <input value={tituloRascunho} onChange={(e) => setTituloRascunho(e.target.value)} />
+                  </div>
+                  <div className="form-field">
+                    <label>Descrição</label>
+                    <textarea
+                      rows={4}
+                      style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: 10, padding: '10px 12px', fontFamily: 'inherit', fontSize: 14, resize: 'vertical' }}
+                      value={descricaoRascunho}
+                      onChange={(e) => setDescricaoRascunho(e.target.value)}
+                    />
+                  </div>
+                  {erroEdicaoChamado && <p style={{ color: '#F87171', fontSize: 13 }}>{erroEdicaoChamado}</p>}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn btn--primary" type="submit" disabled={salvando || !tituloRascunho.trim() || !descricaoRascunho.trim()}>
+                      Salvar
+                    </button>
+                    <button className="btn btn--secondary" type="button" disabled={salvando} onClick={cancelarEdicaoChamado}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="chamado-detalhes-grid">
+                  <div className="chamado-detalhes-item">
+                    <span className="chamado-detalhes-item__label">📝 Descrição</span>
+                    <p className="chamado-detalhes-item__valor">{chamado.descricao}</p>
+                  </div>
+                  <div className="chamado-detalhes-item">
+                    <span className="chamado-detalhes-item__label">🗂️ Categoria</span>
+                    <p className="chamado-detalhes-item__valor">{chamado.categoria_nome}</p>
+                  </div>
+                  <div className="chamado-detalhes-item">
+                    <span className="chamado-detalhes-item__label">🏢 Setor</span>
+                    <p className="chamado-detalhes-item__valor">{chamado.setor_nome}</p>
+                  </div>
+                  <div className="chamado-detalhes-item">
+                    <span className="chamado-detalhes-item__label">👤 Aberto por</span>
+                    <p className="chamado-detalhes-item__valor">{chamado.aberto_por_nome}</p>
+                  </div>
+                  <div className="chamado-detalhes-item">
+                    <span className="chamado-detalhes-item__label">🛠️ Responsável</span>
+                    <p className="chamado-detalhes-item__valor">{chamado.responsavel_nome ?? '—'}</p>
+                  </div>
+                  {chamado.equipamento_nome && (
+                    <div className="chamado-detalhes-item">
+                      <span className="chamado-detalhes-item__label">🖥️ Equipamento</span>
+                      <p className="chamado-detalhes-item__valor">{chamado.equipamento_nome}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {aba === 'comentarios' && (
+            <div className="card" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                {chamado.comentarios.length === 0 && <p className="text-muted">Nenhum comentário ainda.</p>}
+                {chamado.comentarios.map((c) => (
+                  <div key={c.id} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: 10 }}>
+                    <div className="flex-between">
+                      <strong style={{ fontSize: 13 }}>{c.autor_nome}</strong>
+                      <span className="text-muted" style={{ fontSize: 12 }}>{formatarDataHora(c.criado_em)}</span>
+                    </div>
+                    <p style={{ fontSize: 14, margin: '4px 0 0' }}>{c.texto}</p>
+                  </div>
+                ))}
+              </div>
+              {podeComentar && (
+                <form onSubmit={handleComentar} style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    style={{ flex: 1, border: '1px solid var(--color-border)', borderRadius: 10, padding: '10px 12px' }}
+                    placeholder="Escreva um comentário..."
+                    value={novoComentario}
+                    onChange={(e) => setNovoComentario(e.target.value)}
+                  />
+                  <button className="btn btn--primary" type="submit" disabled={salvando}>Enviar</button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {aba === 'anexos' && (
+            <div className="card" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                {chamado.anexos.length === 0 && <p className="text-muted">Nenhum anexo ainda.</p>}
+                {chamado.anexos.map((a) => {
+                  const podeExcluir = isAdmin || a.enviado_por === usuario?.id;
+                  return (
+                    <div key={a.id} className="flex-between" style={{ fontSize: 14 }}>
+                      <a
+                        href={`${API_URL}/chamados/${chamado.id}/anexos/${a.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        📎 {a.nome_arquivo} <span className="text-muted">({formatarTamanho(a.tamanho_bytes)})</span>
+                      </a>
+                      {podeExcluir && (
+                        <button
+                          className="btn btn--secondary"
+                          style={{ padding: '2px 10px', fontSize: 12 }}
+                          onClick={() => handleExcluirAnexo(a.id)}
+                        >
+                          Excluir
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {podeComentar && (
+                <form onSubmit={handleEnviarAnexo} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    id="novo-anexo"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                    onChange={(e) => setNovoAnexo(e.target.files?.[0] ?? null)}
+                  />
+                  <button className="btn btn--primary" type="submit" disabled={!novoAnexo || enviandoAnexo}>
+                    {enviandoAnexo ? 'Enviando...' : 'Anexar'}
+                  </button>
+                </form>
+              )}
+              {erroAnexo && <p style={{ color: '#F87171', fontSize: 13, marginTop: 8 }}>{erroAnexo}</p>}
+            </div>
+          )}
+
+          {aba === 'historico' && (
+            <div className="card" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {chamado.historico.map((h) => (
+                  <div key={h.id} style={{ fontSize: 13 }}>
+                    <span className="text-muted">{formatarDataHora(h.alterado_em)}</span>{' — '}
+                    {h.status_anterior ? `${h.status_anterior} → ${h.status_novo}` : `Chamado criado (${h.status_novo})`}
+                    {' por '}{h.alterado_por_nome}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {isAdmin && (

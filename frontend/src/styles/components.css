@@ -900,7 +900,7 @@
 
 .login-hero__features {
   display: flex;
-  gap: 32px;
+  gap: 27px;
   flex-wrap: wrap;
 }
 
@@ -950,8 +950,8 @@
 }
 
 .login-card__logo {
-  width: 56px;
-  height: 56px;
+  width: 150px;
+  height: 150px;
   object-fit: contain;
   margin: 0 auto 18px;
   display: block;
@@ -1052,6 +1052,124 @@
   .login-hero { grid-template-columns: 1fr; }
   .login-card { justify-self: stretch; }
   .login-header__nav { display: none; }
+}
+
+/* ---------- Cabeçalho e abas do chamado (visual do modal, em página) ---------- */
+.chamado-header {
+  padding: 20px 20px 0;
+}
+
+.chamado-header__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.chamado-header__id {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.chamado-header__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--color-primary-bg-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.chamado-header__titulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.chamado-header__meta {
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.chamado-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.chamado-tabs__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 14px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.chamado-tabs__item:hover { color: var(--color-text); }
+
+.chamado-tabs__item--ativo {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.chamado-tabs__count {
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.chamado-tabs__item--ativo .chamado-tabs__count {
+  background: var(--color-primary-bg-soft);
+  color: var(--color-primary);
+}
+
+.chamado-detalhes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+}
+
+.chamado-detalhes-item {
+  min-width: 0;
+}
+
+.chamado-detalhes-item:first-child {
+  grid-column: 1 / -1;
+}
+
+.chamado-detalhes-item__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.chamado-detalhes-item__valor {
+  font-size: 14px;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .chamado-detalhes-grid { grid-template-columns: 1fr; }
 }
 
 /* ---------- Home do usuário comum ---------- */
