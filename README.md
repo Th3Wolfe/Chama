@@ -1,12 +1,12 @@
-<p align="center">
-  <img src="./img/logo-chama-no-bg.png" alt="Chama - Chamados TI" width="400">
-</p>
-
 <h1 align="center">Chamados TI</h1>
 
 <p align="center">
   Sistema de gestão de chamados de TI feito para órgãos públicos de médio e pequeno porte.<br>
   Abertura, acompanhamento e resolução de chamados com histórico auditável, dashboard e relatórios em PDF.
+</p>
+
+<p align="center">
+  <img src="./img/chama-gif-demo.gif" alt="Chama - Chamados TI" width="1000">
 </p>
 
 <p align="center">
