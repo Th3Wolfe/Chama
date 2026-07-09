@@ -50,4 +50,23 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   res.json(rows[0]);
 });
 
+// Exclui equipamento (admin). Se ele já estiver vinculado a algum chamado,
+// o banco bloqueia a exclusão (FK) — nesse caso orientamos a desativar
+// (status) ou desvincular o equipamento dos chamados antes de excluir.
+router.delete('/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM equipamentos WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ erro: 'Equipamento não encontrado.' });
+    res.status(204).send();
+  } catch (err) {
+    if (err.code === '23503') {
+      return res.status(409).json({
+        erro: 'Este equipamento está vinculado a chamados e não pode ser excluído. Marque-o como inativo em vez disso.',
+      });
+    }
+    throw err;
+  }
+});
+
 module.exports = router;

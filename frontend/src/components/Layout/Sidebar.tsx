@@ -1,34 +1,41 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const LINKS = [
-  { to: '/', label: 'Dashboard', icon: '🏠', end: true, adminOnly: true },
-  { to: '/chamados', label: 'Chamados', icon: '📋', adminOnly: false },
-  { to: '/categorias', label: 'Categorias', icon: '🗂️', adminOnly: true },
-  { to: '/setores', label: 'Setores', icon: '🏢', adminOnly: true },
-  { to: '/equipamentos', label: 'Equipamentos', icon: '🖥️', adminOnly: true },
-  { to: '/usuarios', label: 'Usuários', icon: '👤', adminOnly: true },
-  { to: '/relatorios', label: 'Relatórios', icon: '📊', adminOnly: true },
+const LINKS_ADMIN = [
+  { to: '/', label: 'Dashboard', icon: '🏠', end: true },
+  { to: '/chamados', label: 'Chamados', icon: '📋' },
+  { to: '/categorias', label: 'Categorias', icon: '🗂️' },
+  { to: '/setores', label: 'Setores', icon: '🏢' },
+  { to: '/equipamentos', label: 'Equipamentos', icon: '🖥️' },
+  { to: '/usuarios', label: 'Usuários', icon: '👤' },
+  { to: '/relatorios', label: 'Relatórios', icon: '📊' },
+];
+
+const LINKS_USUARIO = [
+  { to: '/', label: 'Meus chamados', icon: '📋', end: true },
+  { to: '/chamados/novo', label: 'Novo chamado', icon: '➕' },
+  { to: '/base-conhecimento', label: 'Base de conhecimento', icon: '📖' },
+  { to: '/comunicados', label: 'Comunicados', icon: '📣' },
 ];
 
 export function Sidebar() {
   const { usuario, logout } = useAuth();
   const isAdmin = usuario?.perfil === 'admin';
-  const links = LINKS.filter((link) => isAdmin || !link.adminOnly);
+  const links = isAdmin ? LINKS_ADMIN : LINKS_USUARIO;
 
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
-        <div className="sidebar__brand-crest">🏛️</div>
+        <img src="/assets/flame-icon.png" alt="Chama" className="sidebar__brand-logo" />
         <div className="sidebar__brand-text">
-          Câmara Municipal
+          Chama
           <br />
-          de Itajubá
+          <span>Câmara Municipal de Itajubá</span>
         </div>
       </div>
 
       <nav className="sidebar__nav">
-        <div className="sidebar__section-label">Principal</div>
+        <div className="sidebar__section-label">{isAdmin ? 'Principal' : 'Menu'}</div>
         {links.map((link) => (
           <NavLink
             key={link.to}
