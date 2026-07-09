@@ -253,7 +253,10 @@ export function Dashboard() {
                 <div className="empty-state" style={{ padding: '20px 0' }}>Nenhum chamado esperando responsável 🎉</div>
               )}
               {dados.fila_sem_responsavel.slice(0, 6).map((c) => (
-                <div key={c.id} className="notification-item">
+                <div
+                  key={c.id}
+                  className={`notification-item notification-item--sem-responsavel notification-item--prioridade-${c.prioridade_atual}`}
+                >
                   <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => navigate(`/chamados/${c.id}`)}>
                     <p className="notification-item__title">#{c.id} — {c.titulo}</p>
                     <p className="notification-item__desc">{c.setor_nome} · {c.categoria_nome}</p>

@@ -84,22 +84,22 @@ router.get('/', requireAuth, async (req, res) => {
 
   if (!isAdmin) {
     valores.push(req.user.id);
-    condicoes.push(`aberto_por = $${valores.length}`);
+    condicoes.push(`c.aberto_por = $${valores.length}`);
   }
   if (status) {
     valores.push(status);
-    condicoes.push(`status = $${valores.length}`);
+    condicoes.push(`c.status = $${valores.length}`);
   }
   if (categoria_id) {
     valores.push(categoria_id);
-    condicoes.push(`categoria_id = $${valores.length}`);
+    condicoes.push(`c.categoria_id = $${valores.length}`);
   }
   if (isAdmin && responsavel_id) {
     valores.push(responsavel_id);
-    condicoes.push(`responsavel_id = $${valores.length}`);
+    condicoes.push(`c.responsavel_id = $${valores.length}`);
   }
   if (isAdmin && sem_responsavel === '1') {
-    condicoes.push('responsavel_id IS NULL');
+    condicoes.push('c.responsavel_id IS NULL');
   }
 
   const where = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '';

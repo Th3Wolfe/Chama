@@ -23,9 +23,6 @@ export function ToastHost() {
     pushToastExterno = (toast) => {
       const id = `${Date.now()}-${Math.random()}`;
       setToasts((atual) => [...atual, { ...toast, id }]);
-      setTimeout(() => {
-        setToasts((atual) => atual.filter((t) => t.id !== id));
-      }, 7000);
     };
     return () => {
       pushToastExterno = null;
