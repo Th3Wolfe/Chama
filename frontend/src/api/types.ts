@@ -8,6 +8,21 @@ export interface Usuario {
   email: string;
   perfil: Perfil;
   setor?: string | null;
+  ativo?: boolean;
+}
+
+export interface EquipamentoResumo {
+  id: number;
+  nome: string;
+  marca: string | null;
+  modelo: string | null;
+  numero_serie: string | null;
+}
+
+export interface ResultadoBusca {
+  chamados: { id: number; titulo: string; status: StatusChamado }[];
+  equipamentos: { id: number; nome: string; numero_serie: string | null }[];
+  usuarios: { id: number; nome: string; email: string }[];
 }
 
 export interface Categoria {
@@ -38,9 +53,19 @@ export interface Chamado {
   aberto_por_nome?: string;
   responsavel_id: number | null;
   responsavel_nome?: string | null;
+  equipamento_id: number | null;
+  equipamento_nome?: string | null;
   criado_em: string;
   atualizado_em: string;
   resolvido_em: string | null;
+}
+
+export interface ChamadosPaginados {
+  dados: Chamado[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_paginas: number;
 }
 
 export interface HistoricoStatus {

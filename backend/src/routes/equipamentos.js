@@ -1,7 +1,17 @@
 const express = require('express');
 const pool = require('../db');
-const { requireAdmin } = require('../middleware');
+const { requireAuth, requireAdmin } = require('../middleware');
 const router = express.Router();
+
+// Lista os equipamentos vinculados ao usuário logado — usado no formulário de
+// abertura de chamado, pra ele poder opcionalmente indicar em qual máquina é o problema.
+router.get('/meus', requireAuth, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, nome, marca, modelo, numero_serie FROM equipamentos WHERE usuario_id = $1 ORDER BY nome`,
+    [req.user.id]
+  );
+  res.json(rows);
+});
 
 router.get('/', requireAdmin, async (req, res) => {
   const { rows } = await pool.query(

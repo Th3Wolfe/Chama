@@ -9,12 +9,14 @@ const router = express.Router();
 /** Verifica se o chamado pertence ao usuário logado (usado para bloquear acesso cruzado) */
 async function buscarChamadoOuFalhar(id, res) {
   const { rows } = await pool.query(
-    `SELECT c.*, cat.nome AS categoria_nome, s.nome AS setor_nome, u.nome AS aberto_por_nome, r.nome AS responsavel_nome
+    `SELECT c.*, cat.nome AS categoria_nome, s.nome AS setor_nome, u.nome AS aberto_por_nome, r.nome AS responsavel_nome,
+            eq.nome AS equipamento_nome
      FROM chamados c
      JOIN categorias cat ON cat.id = c.categoria_id
      JOIN setores s ON s.id = c.setor_id
      JOIN usuarios u ON u.id = c.aberto_por
      LEFT JOIN usuarios r ON r.id = c.responsavel_id
+     LEFT JOIN equipamentos eq ON eq.id = c.equipamento_id
      WHERE c.id = $1`,
     [id]
   );
@@ -27,7 +29,7 @@ async function buscarChamadoOuFalhar(id, res) {
 
 // --- Criar chamado (RF04) ---
 router.post('/', requireAuth, async (req, res) => {
-  const { titulo, descricao, setor_id, categoria_id } = req.body;
+  const { titulo, descricao, setor_id, categoria_id, equipamento_id } = req.body;
   if (!titulo || !descricao || !setor_id || !categoria_id) {
     return res.status(400).json({ erro: 'titulo, descricao, setor_id e categoria_id são obrigatórios.' });
   }
@@ -38,10 +40,22 @@ router.post('/', requireAuth, async (req, res) => {
   const setor = await pool.query('SELECT id FROM setores WHERE id = $1 AND ativo = TRUE', [setor_id]);
   if (setor.rows.length === 0) return res.status(400).json({ erro: 'Setor inválido ou inativo.' });
 
+  // Se informado, o equipamento precisa existir e estar vinculado ao próprio usuário
+  // (evita abrir chamado "no nome" do notebook de outra pessoa por engano).
+  if (equipamento_id) {
+    const equipamento = await pool.query(
+      'SELECT id FROM equipamentos WHERE id = $1 AND usuario_id = $2',
+      [equipamento_id, req.user.id]
+    );
+    if (equipamento.rows.length === 0) {
+      return res.status(400).json({ erro: 'Equipamento inválido ou não vinculado a você.' });
+    }
+  }
+
   const { rows } = await pool.query(
-    `INSERT INTO chamados (titulo, descricao, setor_id, categoria_id, prioridade_atual, aberto_por)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [titulo, descricao, setor_id, categoria_id, categoria.rows[0].prioridade_padrao, req.user.id]
+    `INSERT INTO chamados (titulo, descricao, setor_id, categoria_id, prioridade_atual, aberto_por, equipamento_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [titulo, descricao, setor_id, categoria_id, categoria.rows[0].prioridade_padrao, req.user.id, equipamento_id || null]
   );
   const chamado = rows[0];
 
@@ -56,10 +70,14 @@ router.post('/', requireAuth, async (req, res) => {
   res.status(201).json(chamado);
 });
 
-// --- Listar chamados (RF06 / RF09) ---
+// --- Listar chamados (RF06 / RF09), paginado ---
 router.get('/', requireAuth, async (req, res) => {
   const isAdmin = req.user.perfil === 'admin';
   const { status, categoria_id, responsavel_id, sem_responsavel } = req.query;
+
+  const pageSize = Math.min(Math.max(parseInt(req.query.page_size, 10) || 20, 1), 100);
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const offset = (page - 1) * pageSize;
 
   const condicoes = [];
   const valores = [];
@@ -85,18 +103,29 @@ router.get('/', requireAuth, async (req, res) => {
   }
 
   const where = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '';
+
+  // COUNT(*) OVER() traz o total de linhas (antes do LIMIT) na mesma consulta,
+  // evitando um segundo round-trip só para saber quantas páginas existem.
+  valores.push(pageSize, offset);
   const { rows } = await pool.query(
-    `SELECT c.*, cat.nome AS categoria_nome, s.nome AS setor_nome, u.nome AS aberto_por_nome, r.nome AS responsavel_nome
+    `SELECT c.*, cat.nome AS categoria_nome, s.nome AS setor_nome, u.nome AS aberto_por_nome, r.nome AS responsavel_nome,
+            eq.nome AS equipamento_nome, COUNT(*) OVER() AS total_geral
      FROM chamados c
      JOIN categorias cat ON cat.id = c.categoria_id
      JOIN setores s ON s.id = c.setor_id
      JOIN usuarios u ON u.id = c.aberto_por
      LEFT JOIN usuarios r ON r.id = c.responsavel_id
+     LEFT JOIN equipamentos eq ON eq.id = c.equipamento_id
      ${where}
-     ORDER BY c.criado_em DESC`,
+     ORDER BY c.criado_em DESC
+     LIMIT $${valores.length - 1} OFFSET $${valores.length}`,
     valores
   );
-  res.json(rows);
+
+  const total = rows.length > 0 ? Number(rows[0].total_geral) : 0;
+  const dados = rows.map(({ total_geral, ...resto }) => resto);
+
+  res.json({ dados, total, page, page_size: pageSize, total_paginas: Math.max(Math.ceil(total / pageSize), 1) });
 });
 
 // --- Detalhe do chamado (com histórico, comentários e anexos) ---
@@ -136,7 +165,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   const chamado = await buscarChamadoOuFalhar(req.params.id, res);
   if (!chamado) return;
 
-  const { status, categoria_id, responsavel_id, prioridade_atual } = req.body;
+  const { status, categoria_id, responsavel_id, prioridade_atual, equipamento_id } = req.body;
   const campos = [];
   const valores = [];
   let i = 1;
@@ -144,6 +173,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   if (categoria_id !== undefined) { campos.push(`categoria_id = $${i++}`); valores.push(categoria_id); }
   if (responsavel_id !== undefined) { campos.push(`responsavel_id = $${i++}`); valores.push(responsavel_id); }
   if (prioridade_atual !== undefined) { campos.push(`prioridade_atual = $${i++}`); valores.push(prioridade_atual); }
+  if (equipamento_id !== undefined) { campos.push(`equipamento_id = $${i++}`); valores.push(equipamento_id); }
   if (status !== undefined) {
     campos.push(`status = $${i++}`);
     valores.push(status);

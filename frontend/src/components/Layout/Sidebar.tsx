@@ -7,6 +7,7 @@ const LINKS = [
   { to: '/categorias', label: 'Categorias', icon: '🗂️', adminOnly: true },
   { to: '/setores', label: 'Setores', icon: '🏢', adminOnly: true },
   { to: '/equipamentos', label: 'Equipamentos', icon: '🖥️', adminOnly: true },
+  { to: '/usuarios', label: 'Usuários', icon: '👤', adminOnly: true },
   { to: '/relatorios', label: 'Relatórios', icon: '📊', adminOnly: true },
 ];
 

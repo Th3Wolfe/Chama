@@ -2,15 +2,17 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../../components/Layout/AppLayout';
 import { api } from '../../api/client';
-import type { Categoria, Setor } from '../../api/types';
+import type { Categoria, EquipamentoResumo, Setor } from '../../api/types';
 
 export function NovoChamado() {
   const navigate = useNavigate();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [setores, setSetores] = useState<Setor[]>([]);
+  const [meusEquipamentos, setMeusEquipamentos] = useState<EquipamentoResumo[]>([]);
   const [titulo, setTitulo] = useState('');
   const [setorId, setSetorId] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
+  const [equipamentoId, setEquipamentoId] = useState('');
   const [descricao, setDescricao] = useState('');
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -19,6 +21,7 @@ export function NovoChamado() {
   useEffect(() => {
     api.get<Categoria[]>('/categorias').then((res) => setCategorias(res.data));
     api.get<Setor[]>('/setores').then((res) => setSetores(res.data));
+    api.get<EquipamentoResumo[]>('/equipamentos/meus').then((res) => setMeusEquipamentos(res.data));
   }, []);
 
   async function handleSubmit(e: FormEvent) {
@@ -37,6 +40,7 @@ export function NovoChamado() {
         setor_id: Number(setorId),
         categoria_id: Number(categoriaId),
         descricao,
+        equipamento_id: equipamentoId ? Number(equipamentoId) : undefined,
       });
 
       if (arquivo) {
@@ -83,6 +87,20 @@ export function NovoChamado() {
               ))}
             </select>
           </div>
+
+          {meusEquipamentos.length > 0 && (
+            <div className="form-field">
+              <label htmlFor="equipamento">Equipamento (opcional)</label>
+              <select id="equipamento" value={equipamentoId} onChange={(e) => setEquipamentoId(e.target.value)}>
+                <option value="">Não sei / não se aplica</option>
+                {meusEquipamentos.map((eq) => (
+                  <option key={eq.id} value={eq.id}>
+                    {eq.nome}{eq.numero_serie ? ` — nº ${eq.numero_serie}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="form-field">
             <label htmlFor="descricao">Descrição</label>

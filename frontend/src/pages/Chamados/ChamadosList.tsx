@@ -4,7 +4,7 @@ import { AppLayout } from '../../components/Layout/AppLayout';
 import { StatusBadge, PrioridadeBadge } from '../../components/Badge';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import type { Chamado, StatusChamado } from '../../api/types';
+import type { Chamado, ChamadosPaginados, StatusChamado } from '../../api/types';
 
 const ABAS: { label: string; status?: StatusChamado }[] = [
   { label: 'Todos' },
@@ -12,6 +12,8 @@ const ABAS: { label: string; status?: StatusChamado }[] = [
   { label: 'Em andamento', status: 'em_andamento' },
   { label: 'Resolvidos', status: 'resolvido' },
 ];
+
+const TAMANHO_PAGINA = 15;
 
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -22,18 +24,36 @@ export function ChamadosList() {
   const { usuario } = useAuth();
   const [params, setParams] = useSearchParams();
   const statusAtivo = params.get('status') as StatusChamado | null;
+  const pagina = Math.max(parseInt(params.get('page') || '1', 10), 1);
 
   const [chamados, setChamados] = useState<Chamado[]>([]);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [total, setTotal] = useState(0);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
     setCarregando(true);
-    const query = statusAtivo ? `?status=${statusAtivo}` : '';
+    const query = new URLSearchParams({ page: String(pagina), page_size: String(TAMANHO_PAGINA) });
+    if (statusAtivo) query.set('status', statusAtivo);
     api
-      .get<Chamado[]>(`/chamados${query}`)
-      .then((res) => setChamados(res.data))
+      .get<ChamadosPaginados>(`/chamados?${query.toString()}`)
+      .then((res) => {
+        setChamados(res.data.dados);
+        setTotalPaginas(res.data.total_paginas);
+        setTotal(res.data.total);
+      })
       .finally(() => setCarregando(false));
-  }, [statusAtivo]);
+  }, [statusAtivo, pagina]);
+
+  function mudarAba(status?: StatusChamado) {
+    setParams(status ? { status, page: '1' } : { page: '1' });
+  }
+
+  function irParaPagina(novaPagina: number) {
+    const proximo = new URLSearchParams(params);
+    proximo.set('page', String(novaPagina));
+    setParams(proximo);
+  }
 
   const isAdmin = usuario?.perfil === 'admin';
 
@@ -50,7 +70,7 @@ export function ChamadosList() {
               <button
                 key={aba.label}
                 className={ativa ? 'btn btn--primary' : 'btn btn--secondary'}
-                onClick={() => setParams(aba.status ? { status: aba.status } : {})}
+                onClick={() => mudarAba(aba.status)}
               >
                 {aba.label}
               </button>
@@ -95,6 +115,35 @@ export function ChamadosList() {
             ))}
           </tbody>
         </table>
+
+        {!carregando && total > 0 && (
+          <div className="flex-between" style={{ padding: '14px 16px', borderTop: '1px solid var(--color-border)' }}>
+            <span className="text-muted" style={{ fontSize: 13 }}>
+              Mostrando {(pagina - 1) * TAMANHO_PAGINA + 1}–{Math.min(pagina * TAMANHO_PAGINA, total)} de {total} chamados
+            </span>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button className="btn btn--secondary" disabled={pagina <= 1} onClick={() => irParaPagina(pagina - 1)}>
+                ‹
+              </button>
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPaginas || Math.abs(p - pagina) <= 1)
+                .map((p, i, arr) => (
+                  <span key={p} style={{ display: 'flex', gap: 6 }}>
+                    {i > 0 && arr[i - 1] !== p - 1 && <span className="text-muted" style={{ padding: '0 4px' }}>…</span>}
+                    <button
+                      className={p === pagina ? 'btn btn--primary' : 'btn btn--secondary'}
+                      onClick={() => irParaPagina(p)}
+                    >
+                      {p}
+                    </button>
+                  </span>
+                ))}
+              <button className="btn btn--secondary" disabled={pagina >= totalPaginas} onClick={() => irParaPagina(pagina + 1)}>
+                ›
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

@@ -4,10 +4,11 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationsPanel } from '../NotificationsPanel';
 import { pushToast } from '../Toast';
-import type { Notificacao } from '../../api/types';
+import type { Notificacao, ResultadoBusca } from '../../api/types';
 
 const INTERVALO_POLLING_MS = 15000;
 const TITULO_BASE = 'Sistema de Chamados de TI';
+const DEBOUNCE_BUSCA_MS = 300;
 
 const TIPO_INFO: Record<Notificacao['tipo'], { titulo: string; cor: string; icone: string }> = {
   novo_chamado: { titulo: 'Novo chamado aberto', cor: '#3B82F6', icone: '🆕' },
@@ -25,7 +26,48 @@ export function Topbar({ titulo, subtitulo }: { titulo: string; subtitulo?: stri
   const painelRef = useRef<HTMLDivElement>(null);
   const idsConhecidos = useRef<Set<number> | null>(null); // null = ainda não fez a primeira busca
 
+  const [termoBusca, setTermoBusca] = useState('');
+  const [resultadoBusca, setResultadoBusca] = useState<ResultadoBusca | null>(null);
+  const [buscaAberta, setBuscaAberta] = useState(false);
+  const buscaRef = useRef<HTMLDivElement>(null);
+
   const naoLidas = notificacoes.filter((n) => !n.lida).length;
+
+  // Busca com debounce: só dispara 300ms depois que a pessoa para de digitar,
+  // e só a partir de 2 caracteres (evita martelar o backend a cada tecla).
+  useEffect(() => {
+    if (termoBusca.trim().length < 2) {
+      setResultadoBusca(null);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      api
+        .get<ResultadoBusca>('/busca', { params: { q: termoBusca.trim() } })
+        .then((res) => setResultadoBusca(res.data))
+        .catch(() => setResultadoBusca(null));
+    }, DEBOUNCE_BUSCA_MS);
+    return () => clearTimeout(timeout);
+  }, [termoBusca]);
+
+  useEffect(() => {
+    function aoClicarFora(e: MouseEvent) {
+      if (buscaRef.current && !buscaRef.current.contains(e.target as Node)) {
+        setBuscaAberta(false);
+      }
+    }
+    document.addEventListener('mousedown', aoClicarFora);
+    return () => document.removeEventListener('mousedown', aoClicarFora);
+  }, []);
+
+  function irPara(destino: string) {
+    setBuscaAberta(false);
+    setTermoBusca('');
+    navigate(destino);
+  }
+
+  const temResultados = !!resultadoBusca && (
+    resultadoBusca.chamados.length > 0 || resultadoBusca.equipamentos.length > 0 || resultadoBusca.usuarios.length > 0
+  );
 
   useEffect(() => {
     if (!usuario) return;
@@ -109,9 +151,55 @@ export function Topbar({ titulo, subtitulo }: { titulo: string; subtitulo?: stri
       </div>
 
       <div className="topbar__actions">
-        <div className="topbar__search">
+        <div className="topbar__search" ref={buscaRef} style={{ position: 'relative' }}>
           🔍
-          <input placeholder="Buscar chamado, usuário ou equipamento..." />
+          <input
+            placeholder="Buscar chamado, usuário ou equipamento..."
+            value={termoBusca}
+            onChange={(e) => {
+              setTermoBusca(e.target.value);
+              setBuscaAberta(true);
+            }}
+            onFocus={() => setBuscaAberta(true)}
+          />
+          {buscaAberta && termoBusca.trim().length >= 2 && (
+            <div className="search-dropdown">
+              {!resultadoBusca && <div className="search-dropdown__empty">Buscando...</div>}
+              {resultadoBusca && !temResultados && (
+                <div className="search-dropdown__empty">Nenhum resultado para "{termoBusca}".</div>
+              )}
+              {resultadoBusca && resultadoBusca.chamados.length > 0 && (
+                <div className="search-dropdown__group">
+                  <span className="search-dropdown__label">Chamados</span>
+                  {resultadoBusca.chamados.map((c) => (
+                    <button key={c.id} className="search-dropdown__item" onClick={() => irPara(`/chamados/${c.id}`)}>
+                      #{c.id} — {c.titulo}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {resultadoBusca && resultadoBusca.equipamentos.length > 0 && (
+                <div className="search-dropdown__group">
+                  <span className="search-dropdown__label">Equipamentos</span>
+                  {resultadoBusca.equipamentos.map((eq) => (
+                    <button key={eq.id} className="search-dropdown__item" onClick={() => irPara('/equipamentos')}>
+                      🖥️ {eq.nome}{eq.numero_serie ? ` — nº ${eq.numero_serie}` : ''}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {resultadoBusca && resultadoBusca.usuarios.length > 0 && (
+                <div className="search-dropdown__group">
+                  <span className="search-dropdown__label">Usuários</span>
+                  {resultadoBusca.usuarios.map((u) => (
+                    <button key={u.id} className="search-dropdown__item" onClick={() => irPara('/usuarios')}>
+                      👤 {u.nome} <span className="text-muted">— {u.email}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div style={{ position: 'relative' }} ref={painelRef}>
           <button

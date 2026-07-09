@@ -1,8 +1,22 @@
 const express = require('express');
 const PDFDocument = require('pdfkit');
+const ExcelJS = require('exceljs');
 const pool = require('../db');
 const { requireAdmin } = require('../middleware');
 const router = express.Router();
+
+async function enviarExcel(res, nomeArquivo, colunas, linhas) {
+  const workbook = new ExcelJS.Workbook();
+  const planilha = workbook.addWorksheet('Relatório');
+  planilha.columns = colunas;
+  planilha.getRow(1).font = { bold: true };
+  linhas.forEach((linha) => planilha.addRow(linha));
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivo}"`);
+  await workbook.xlsx.write(res);
+  res.end();
+}
 
 function iniciarPdf(res, nomeArquivo, titulo) {
   res.setHeader('Content-Type', 'application/pdf');
@@ -57,6 +71,31 @@ router.get('/mensal', requireAdmin, async (req, res) => {
   doc.end();
 });
 
+// Relatório mensal em Excel — mesmos dados do PDF, em planilha
+router.get('/mensal/excel', requireAdmin, async (req, res) => {
+  const mesRef = req.query.mes || new Date().toISOString().slice(0, 7);
+  const { rows } = await pool.query(
+    `SELECT cat.nome AS categoria, COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE c.status = 'resolvido')::int AS resolvidos,
+            COUNT(*) FILTER (WHERE c.status <> 'resolvido')::int AS pendentes
+     FROM chamados c JOIN categorias cat ON cat.id = c.categoria_id
+     WHERE to_char(c.criado_em, 'YYYY-MM') = $1
+     GROUP BY cat.nome ORDER BY total DESC`,
+    [mesRef]
+  );
+  await enviarExcel(
+    res,
+    `relatorio-mensal-${mesRef}.xlsx`,
+    [
+      { header: 'Categoria', key: 'categoria', width: 30 },
+      { header: 'Total', key: 'total', width: 12 },
+      { header: 'Resolvidos', key: 'resolvidos', width: 14 },
+      { header: 'Pendentes', key: 'pendentes', width: 14 },
+    ],
+    rows
+  );
+});
+
 // Relatório por técnico
 router.get('/tecnico', requireAdmin, async (req, res) => {
   const { rows } = await pool.query(
@@ -84,6 +123,49 @@ router.get('/setor', requireAdmin, async (req, res) => {
   const doc = iniciarPdf(res, 'relatorio-por-setor.pdf', 'Relatório por Setor');
   rows.forEach((r) => doc.fontSize(12).text(`${r.nome}: ${r.total}`));
   doc.end();
+});
+
+// Relatório por técnico em Excel
+router.get('/tecnico/excel', requireAdmin, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT u.nome AS tecnico, COUNT(*)::int AS total,
+            AVG(EXTRACT(EPOCH FROM (c.resolvido_em - c.criado_em))) FILTER (WHERE c.resolvido_em IS NOT NULL) AS segundos_medio
+     FROM chamados c JOIN usuarios u ON u.id = c.responsavel_id
+     GROUP BY u.nome ORDER BY total DESC`
+  );
+  const linhas = rows.map((r) => ({
+    tecnico: r.tecnico,
+    total: r.total,
+    tempo_medio_horas: r.segundos_medio ? Math.round((r.segundos_medio / 3600) * 10) / 10 : null,
+  }));
+  await enviarExcel(
+    res,
+    'relatorio-por-tecnico.xlsx',
+    [
+      { header: 'Técnico', key: 'tecnico', width: 30 },
+      { header: 'Total de chamados', key: 'total', width: 18 },
+      { header: 'Tempo médio (h)', key: 'tempo_medio_horas', width: 18 },
+    ],
+    linhas
+  );
+});
+
+// Relatório por setor em Excel
+router.get('/setor/excel', requireAdmin, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT s.nome AS setor, COUNT(*)::int AS total
+     FROM chamados c JOIN setores s ON s.id = c.setor_id
+     GROUP BY s.nome ORDER BY total DESC`
+  );
+  await enviarExcel(
+    res,
+    'relatorio-por-setor.xlsx',
+    [
+      { header: 'Setor', key: 'setor', width: 30 },
+      { header: 'Total de chamados', key: 'total', width: 18 },
+    ],
+    rows
+  );
 });
 
 module.exports = router;

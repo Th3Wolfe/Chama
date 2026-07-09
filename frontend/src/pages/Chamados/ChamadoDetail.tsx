@@ -4,7 +4,7 @@ import { AppLayout } from '../../components/Layout/AppLayout';
 import { StatusBadge, PrioridadeBadge } from '../../components/Badge';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import type { Categoria, ChamadoDetalhe, StatusChamado, Usuario } from '../../api/types';
+import type { Categoria, ChamadoDetalhe, Equipamento, StatusChamado, Usuario } from '../../api/types';
 
 function formatarDataHora(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -19,6 +19,7 @@ export function ChamadoDetail() {
   const [chamado, setChamado] = useState<ChamadoDetalhe | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [tecnicos, setTecnicos] = useState<Usuario[]>([]);
+  const [equipamentos, setEquipamentos] = useState<Equipamento[]>([]);
   const [novoComentario, setNovoComentario] = useState('');
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -31,7 +32,10 @@ export function ChamadoDetail() {
   useEffect(() => {
     setCarregando(true);
     const requests: Promise<any>[] = [recarregar(), api.get<Categoria[]>('/categorias').then((r) => setCategorias(r.data))];
-    if (isAdmin) requests.push(api.get<Usuario[]>('/usuarios?perfil=admin').then((r) => setTecnicos(r.data)));
+    if (isAdmin) {
+      requests.push(api.get<Usuario[]>('/usuarios?perfil=admin').then((r) => setTecnicos(r.data)));
+      requests.push(api.get<Equipamento[]>('/equipamentos').then((r) => setEquipamentos(r.data)));
+    }
     Promise.all(requests).finally(() => setCarregando(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -39,7 +43,8 @@ export function ChamadoDetail() {
   async function handleAtualizar(campo: string, valor: string) {
     setSalvando(true);
     try {
-      await api.patch(`/chamados/${id}`, { [campo]: campo === 'categoria_id' || campo === 'responsavel_id' ? Number(valor) || null : valor });
+      const campoNumerico = campo === 'categoria_id' || campo === 'responsavel_id' || campo === 'equipamento_id';
+      await api.patch(`/chamados/${id}`, { [campo]: campoNumerico ? Number(valor) || null : valor });
       await recarregar();
     } finally {
       setSalvando(false);
@@ -115,6 +120,11 @@ export function ChamadoDetail() {
               )}
             </div>
             <p>{chamado.descricao}</p>
+            {chamado.equipamento_nome && (
+              <p className="text-muted" style={{ fontSize: 13, marginTop: 10 }}>
+                🖥️ Equipamento: {chamado.equipamento_nome}
+              </p>
+            )}
           </div>
 
           <div className="card" style={{ padding: 20 }}>
@@ -195,6 +205,16 @@ export function ChamadoDetail() {
                 <option value="">Sem responsável</option>
                 {tecnicos.map((t) => (
                   <option key={t.id} value={t.id}>{t.nome}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Equipamento</label>
+              <select value={chamado.equipamento_id ?? ''} disabled={salvando} onChange={(e) => handleAtualizar('equipamento_id', e.target.value)}>
+                <option value="">Nenhum</option>
+                {equipamentos.map((eq) => (
+                  <option key={eq.id} value={eq.id}>{eq.nome}{eq.numero_serie ? ` — nº ${eq.numero_serie}` : ''}</option>
                 ))}
               </select>
             </div>

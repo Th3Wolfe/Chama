@@ -9,6 +9,7 @@ import { ChamadoDetail } from './pages/Chamados/ChamadoDetail';
 import { Categorias } from './pages/Categorias';
 import { Setores } from './pages/Setores';
 import { Equipamentos } from './pages/Equipamentos';
+import { Usuarios } from './pages/Usuarios';
 import { Relatorios } from './pages/Relatorios';
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/categorias" element={<RequireAdmin><Categorias /></RequireAdmin>} />
             <Route path="/setores" element={<RequireAdmin><Setores /></RequireAdmin>} />
             <Route path="/equipamentos" element={<RequireAdmin><Equipamentos /></RequireAdmin>} />
+            <Route path="/usuarios" element={<RequireAdmin><Usuarios /></RequireAdmin>} />
             <Route path="/relatorios" element={<RequireAdmin><Relatorios /></RequireAdmin>} />
           </Routes>
         </RequireAuth>
