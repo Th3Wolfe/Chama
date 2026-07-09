@@ -1172,6 +1172,291 @@
   .chamado-detalhes-grid { grid-template-columns: 1fr; }
 }
 
+/* ---------- Modal de chamado (aberto a partir do Dashboard / Chamados) ---------- */
+.chamado-modal {
+  width: min(760px, 94vw);
+}
+
+.chamado-modal__topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 20px 0;
+}
+
+.chamado-modal__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.chamado-modal__body {
+  padding: 20px;
+}
+
+.chamado-modal__left {
+  min-width: 0;
+}
+
+.chamado-modal__historico-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chamado-modal__historico-list--tab {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.chamado-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 20px 20px;
+}
+
+.chamado-modal__highlight {
+  animation: chamado-modal-highlight 1s ease;
+}
+
+@keyframes chamado-modal-highlight {
+  0% { box-shadow: 0 0 0 2px var(--color-primary); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ---------- Dropdown genérico (ex.: "Mais ações" no modal de chamado) ---------- */
+.dropdown {
+  position: relative;
+}
+
+.dropdown__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 260px;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 14px;
+  z-index: 70;
+}
+
+.dropdown__menu .form-field {
+  margin-bottom: 12px;
+}
+
+.dropdown__menu .form-field:last-of-type {
+  margin-bottom: 0;
+}
+
+/* ---------- Chat de comentários (aba "Comentários" do modal) ---------- */
+.chamado-chat {
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+}
+
+.chamado-chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.chamado-chat__row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.chamado-chat__row--own {
+  justify-content: flex-end;
+}
+
+.chamado-chat__bubble {
+  max-width: 78%;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 14px 14px 14px 4px;
+  padding: 8px 12px;
+}
+
+.chamado-chat__row--own .chamado-chat__bubble {
+  background: var(--color-primary-bg-soft);
+  border-color: rgba(59, 130, 246, 0.35);
+  border-radius: 14px 14px 4px 14px;
+}
+
+.chamado-chat__autor {
+  display: block;
+  font-size: 12px;
+  color: var(--color-primary);
+  margin-bottom: 2px;
+}
+
+.chamado-chat__texto {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chamado-chat__hora {
+  display: block;
+  font-size: 10.5px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  text-align: right;
+}
+
+.chamado-chat__form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.chamado-chat__form input {
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--color-input-bg);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+/* ---------- Miniaturas de anexos + lightbox ---------- */
+.anexos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.anexo-card {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-input-bg);
+  overflow: hidden;
+}
+
+.anexo-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: var(--color-bg-alt);
+  cursor: zoom-in;
+}
+
+.anexo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.anexo-thumb--arquivo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.anexo-card__info {
+  padding: 6px 8px 8px;
+}
+
+.anexo-card__nome {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anexo-card__excluir {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(10, 14, 24, 0.75);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+.anexo-card__excluir:hover { background: rgba(239, 68, 68, 0.85); }
+
+.lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 6, 12, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 32px;
+  animation: modal-fade-in 0.15s ease-out;
+}
+
+.lightbox {
+  max-width: min(920px, 92vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: modal-enter 0.18s ease-out;
+}
+
+.lightbox__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lightbox__nome {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lightbox__img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(88vh - 54px);
+  object-fit: contain;
+  margin: 0 auto;
+  background: var(--color-bg-alt);
+}
+
+
 /* ---------- Home do usuário comum ---------- */
 .userhome-cards {
   display: grid;

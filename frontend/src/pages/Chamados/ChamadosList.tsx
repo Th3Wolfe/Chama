@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '../../components/Layout/AppLayout';
 import { StatusBadge, PrioridadeBadge } from '../../components/Badge';
+import { ChamadoModal } from '../../components/ChamadoModal';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { POLLING_MS } from '../../config/polling';
@@ -31,35 +32,30 @@ export function ChamadosList() {
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [total, setTotal] = useState(0);
   const [carregando, setCarregando] = useState(true);
+  const [chamadoAbertoId, setChamadoAbertoId] = useState<number | null>(null);
+
+  function carregar(mostrarCarregando: boolean) {
+    if (mostrarCarregando) setCarregando(true);
+    const query = new URLSearchParams({ page: String(pagina), page_size: String(TAMANHO_PAGINA) });
+    if (statusAtivo) query.set('status', statusAtivo);
+    return api
+      .get<ChamadosPaginados>(`/chamados?${query.toString()}`)
+      .then((res) => {
+        setChamados(res.data.dados);
+        setTotalPaginas(res.data.total_paginas);
+        setTotal(res.data.total);
+      })
+      .finally(() => {
+        setCarregando(false);
+      });
+  }
 
   useEffect(() => {
-    let cancelado = false;
-
-    function carregar(mostrarCarregando: boolean) {
-      if (mostrarCarregando) setCarregando(true);
-      const query = new URLSearchParams({ page: String(pagina), page_size: String(TAMANHO_PAGINA) });
-      if (statusAtivo) query.set('status', statusAtivo);
-      api
-        .get<ChamadosPaginados>(`/chamados?${query.toString()}`)
-        .then((res) => {
-          if (cancelado) return;
-          setChamados(res.data.dados);
-          setTotalPaginas(res.data.total_paginas);
-          setTotal(res.data.total);
-        })
-        .finally(() => {
-          if (!cancelado) setCarregando(false);
-        });
-    }
-
     carregar(true);
     // Lista se atualiza sozinha a cada 1s, sem o "piscar" do carregando.
     const intervalo = setInterval(() => carregar(false), POLLING_MS);
-
-    return () => {
-      cancelado = true;
-      clearInterval(intervalo);
-    };
+    return () => clearInterval(intervalo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusAtivo, pagina]);
 
   function mudarAba(status?: StatusChamado) {
@@ -118,7 +114,7 @@ export function ChamadosList() {
               <tr><td colSpan={9} className="empty-state">Nenhum chamado encontrado.</td></tr>
             )}
             {chamados.map((c) => (
-              <tr key={c.id} className="clickable" onClick={() => navigate(`/chamados/${c.id}`)}>
+              <tr key={c.id} className="clickable" onClick={() => setChamadoAbertoId(c.id)}>
                 <td className={`td--prioridade-${c.prioridade_atual}`}>#{c.id}</td>
                 <td>{c.titulo}</td>
                 <td>{c.setor_nome}</td>
@@ -162,6 +158,14 @@ export function ChamadosList() {
           </div>
         )}
       </div>
+
+      {chamadoAbertoId !== null && (
+        <ChamadoModal
+          chamadoId={chamadoAbertoId}
+          onFechar={() => setChamadoAbertoId(null)}
+          onMudou={() => carregar(false)}
+        />
+      )}
     </AppLayout>
   );
 }

@@ -17,6 +17,7 @@ import { AppLayout } from '../components/Layout/AppLayout';
 import { StatCard } from '../components/StatCard';
 import { QuickActions } from '../components/QuickActions';
 import { PrioridadeBadge } from '../components/Badge';
+import { ChamadoModal } from '../components/ChamadoModal';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { POLLING_MS } from '../config/polling';
@@ -71,6 +72,7 @@ export function Dashboard() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [aba, setAba] = useState<'aberto' | 'em_andamento'>('aberto');
+  const [chamadoAbertoId, setChamadoAbertoId] = useState<number | null>(null);
 
   async function carregar() {
     try {
@@ -239,7 +241,7 @@ export function Dashboard() {
             <TabelaChamados
               chamados={listaAtual}
               vazio={aba === 'aberto' ? 'Nenhum chamado aberto no momento.' : 'Nenhum chamado em andamento no momento.'}
-              onAbrir={(id) => navigate(`/chamados/${id}`)}
+              onAbrir={(id) => setChamadoAbertoId(id)}
             />
           </div>
         </div>
@@ -258,7 +260,7 @@ export function Dashboard() {
                   key={c.id}
                   className={`notification-item notification-item--sem-responsavel notification-item--prioridade-${c.prioridade_atual}`}
                 >
-                  <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => navigate(`/chamados/${c.id}`)}>
+                  <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setChamadoAbertoId(c.id)}>
                     <p className="notification-item__title">#{c.id} — {c.titulo}</p>
                     <p className="notification-item__desc">{c.setor_nome} · {c.categoria_nome}</p>
                   </div>
@@ -270,6 +272,14 @@ export function Dashboard() {
           <QuickActions />
         </div>
       </div>
+
+      {chamadoAbertoId !== null && (
+        <ChamadoModal
+          chamadoId={chamadoAbertoId}
+          onFechar={() => setChamadoAbertoId(null)}
+          onMudou={carregar}
+        />
+      )}
     </AppLayout>
   );
 }
