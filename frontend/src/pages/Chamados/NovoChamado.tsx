@@ -99,7 +99,7 @@ export function NovoChamado() {
             <input id="anexo" type="file" accept="image/*" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
           </div>
 
-          {erro && <p style={{ color: '#D2444B', fontSize: 13, marginBottom: 12 }}>{erro}</p>}
+          {erro && <p style={{ color: '#F87171', fontSize: 13, marginBottom: 12 }}>{erro}</p>}
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="submit" className="btn btn--primary" disabled={enviando}>

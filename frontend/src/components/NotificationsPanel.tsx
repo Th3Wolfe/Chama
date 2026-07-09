@@ -1,10 +1,10 @@
 import type { Notificacao } from '../api/types';
 
 const TIPO_INFO: Record<Notificacao['tipo'], { titulo: string; cor: string }> = {
-  novo_chamado: { titulo: 'Novo chamado aberto', cor: '#2F6FED' },
-  novo_comentario: { titulo: 'Novo comentário', cor: '#C9820A' },
-  mudanca_status: { titulo: 'Status alterado', cor: '#8B5CF6' },
-  chamado_atribuido: { titulo: 'Chamado atribuído a você', cor: '#1D9A4B' },
+  novo_chamado: { titulo: 'Novo chamado aberto', cor: '#3B82F6' },
+  novo_comentario: { titulo: 'Novo comentário', cor: '#F5A623' },
+  mudanca_status: { titulo: 'Status alterado', cor: '#A78BFA' },
+  chamado_atribuido: { titulo: 'Chamado atribuído a você', cor: '#22C55E' },
 };
 
 function tempoRelativo(iso: string): string {

@@ -1,45 +1,47 @@
 :root {
-  /* Cores base — extraídas do protótipo fornecido */
-  --color-bg: #EEF1F7;
-  --color-sidebar: #14233F;
-  --color-sidebar-hover: #1C2F52;
-  --color-sidebar-active: #24406E;
-  --color-sidebar-text: #B9C4D6;
+  /* Cores base — tema escuro, inspirado no protótipo de dashboard fornecido */
+  --color-bg: #0A0E18;
+  --color-bg-alt: #0E1420;
+  --color-sidebar: #0A0E18;
+  --color-sidebar-hover: #151C2C;
+  --color-sidebar-active: #1B2540;
+  --color-sidebar-text: #8B93A7;
   --color-sidebar-text-active: #FFFFFF;
 
-  --color-primary: #2F6FED;
-  --color-primary-hover: #2559C7;
-  --color-primary-bg-soft: #E9F0FE;
+  --color-primary: #3B82F6;
+  --color-primary-hover: #2E6BD9;
+  --color-primary-bg-soft: rgba(59, 130, 246, 0.16);
 
-  --color-text: #16213A;
-  --color-text-muted: #6B7686;
-  --color-border: #DFE4EC;
-  --color-card-bg: #FFFFFF;
+  --color-text: #EAEDF5;
+  --color-text-muted: #8891A6;
+  --color-border: #212A3E;
+  --color-card-bg: #10162A;
+  --color-input-bg: #0D1322;
 
   /* Status */
-  --color-status-aberto-bg: #E9F0FE;
-  --color-status-aberto-text: #2F6FED;
-  --color-status-andamento-bg: #FFF2DF;
-  --color-status-andamento-text: #C9820A;
-  --color-status-resolvido-bg: #E3F7EA;
-  --color-status-resolvido-text: #1D9A4B;
+  --color-status-aberto-bg: rgba(59, 130, 246, 0.18);
+  --color-status-aberto-text: #6DA8FF;
+  --color-status-andamento-bg: rgba(245, 166, 35, 0.18);
+  --color-status-andamento-text: #F5B84B;
+  --color-status-resolvido-bg: rgba(34, 197, 94, 0.18);
+  --color-status-resolvido-text: #4ADE80;
 
   /* Prioridade — Alta é sólida e chamativa de propósito (precisa saltar aos
      olhos numa lista de chamados); Média/Baixa ficam discretas por comparação,
-     mas com contraste suficiente pro fundo da página (--color-bg) pra não sumir. */
-  --color-priority-alta-bg: #E4373F;
+     mas com contraste suficiente pro fundo escuro da página pra não sumir. */
+  --color-priority-alta-bg: #EF4444;
   --color-priority-alta-text: #FFFFFF;
-  --color-priority-media-bg: #FDECD1;
-  --color-priority-media-text: #B4720F;
-  --color-priority-baixa-bg: #D4F0DE;
-  --color-priority-baixa-text: #1F7A45;
+  --color-priority-media-bg: rgba(245, 166, 35, 0.18);
+  --color-priority-media-text: #F5B84B;
+  --color-priority-baixa-bg: rgba(34, 197, 94, 0.18);
+  --color-priority-baixa-text: #4ADE80;
 
-  /* Acentos de card (usados em StatCards e barras de destaque) */
-  --accent-blue: #2F6FED;
-  --accent-amber: #E3922A;
-  --accent-green: #1D9A4B;
-  --accent-purple: #8B5CF6;
-  --accent-red: #E4373F;
+  /* Acentos de card (usados em StatCards, ícones e barras de destaque) */
+  --accent-blue: #3B82F6;
+  --accent-amber: #F5A623;
+  --accent-green: #22C55E;
+  --accent-purple: #A78BFA;
+  --accent-red: #EF4444;
 
   /* Tipografia */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -48,7 +50,7 @@
   --sidebar-width: 248px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 2px 6px rgba(16, 24, 40, 0.06);
+  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
 * { box-sizing: border-box; }
@@ -85,6 +87,16 @@ a {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+/* Scrollbar discreta, combinando com o tema escuro */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+  border: 2px solid var(--color-bg);
+}
+::-webkit-scrollbar-thumb:hover { background: #2C3752; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

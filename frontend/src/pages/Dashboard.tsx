@@ -21,7 +21,7 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import type { Chamado, DashboardData } from '../api/types';
 
-const CORES_CATEGORIA = ['#2F6FED', '#1D9A4B', '#F2A93B', '#8B5CF6', '#E2585F', '#94A3B8'];
+const CORES_CATEGORIA = ['#3B82F6', '#22C55E', '#F5A623', '#A78BFA', '#EF4444', '#8892A8'];
 
 function formatarDuracao(segundos: number | null): string {
   if (!segundos) return 'N/A';
@@ -138,18 +138,18 @@ export function Dashboard() {
         <div>
           <div className="stat-grid">
             <StatCard
-              icon="📅" iconBg="#E9F0FE" accent="var(--accent-blue)" label="Abertos" value={abertos}
+              icon="📅" iconBg="var(--accent-blue)" accent="var(--accent-blue)" label="Abertos" value={abertos}
               footer={<p className="stat-card__delta stat-card__delta--neutral">{semResponsavel} sem responsável</p>}
             />
             <StatCard
-              icon="🗓️" iconBg="#FFF2DF" accent="var(--accent-amber)" label="Em andamento" value={emAndamento}
+              icon="🗓️" iconBg="var(--accent-amber)" accent="var(--accent-amber)" label="Em andamento" value={emAndamento}
               footer={<p className="stat-card__delta stat-card__delta--neutral">{aguardandoUsuario} sem responsável</p>}
             />
             <StatCard
-              icon="✅" iconBg="#E3F7EA" accent="var(--accent-green)" label="Resolvidos hoje" value={dados.resolvidos_hoje}
+              icon="✅" iconBg="var(--accent-green)" accent="var(--accent-green)" label="Resolvidos hoje" value={dados.resolvidos_hoje}
             />
             <StatCard
-              icon="🕐" iconBg="#F1EAFB" accent="var(--accent-purple)" label="Tempo médio de resolução" value={formatarDuracao(dados.tempo_medio_segundos)}
+              icon="🕐" iconBg="var(--accent-purple)" accent="var(--accent-purple)" label="Tempo médio de resolução" value={formatarDuracao(dados.tempo_medio_segundos)}
             />
           </div>
 
@@ -160,18 +160,31 @@ export function Dashboard() {
               </div>
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={dados.serie_diaria}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#EEF1F5" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                   <XAxis
                     dataKey="dia"
                     tickFormatter={(d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                     fontSize={12}
+                    tick={{ fill: '#8891A6' }}
+                    axisLine={{ stroke: '#212A3E' }}
+                    tickLine={{ stroke: '#212A3E' }}
                   />
-                  <YAxis fontSize={12} allowDecimals={false} />
-                  <Tooltip labelFormatter={(d) => new Date(d as string).toLocaleDateString('pt-BR')} />
-                  <Legend />
-                  <Line type="monotone" dataKey="abertos" name="Abertos" stroke="#2F6FED" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="em_andamento" name="Em andamento" stroke="#F2A93B" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="resolvidos" name="Resolvidos" stroke="#1D9A4B" strokeWidth={2} dot={false} />
+                  <YAxis
+                    fontSize={12}
+                    allowDecimals={false}
+                    tick={{ fill: '#8891A6' }}
+                    axisLine={{ stroke: '#212A3E' }}
+                    tickLine={{ stroke: '#212A3E' }}
+                  />
+                  <Tooltip
+                    labelFormatter={(d) => new Date(d as string).toLocaleDateString('pt-BR')}
+                    contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }}
+                    labelStyle={{ color: '#8891A6' }}
+                  />
+                  <Legend wrapperStyle={{ color: '#8891A6', fontSize: 12 }} />
+                  <Line type="monotone" dataKey="abertos" name="Abertos" stroke="#3B82F6" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="em_andamento" name="Em andamento" stroke="#F5A623" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="resolvidos" name="Resolvidos" stroke="#22C55E" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -189,15 +202,15 @@ export function Dashboard() {
                     cy="45%"
                   >
                     {dados.por_categoria.map((_, i) => (
-                      <Cell key={i} fill={CORES_CATEGORIA[i % CORES_CATEGORIA.length]} />
+                      <Cell key={i} fill={CORES_CATEGORIA[i % CORES_CATEGORIA.length]} stroke="#10162A" />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }} />
                   <Legend
                     layout="horizontal"
                     align="center"
                     verticalAlign="bottom"
-                    wrapperStyle={{ fontSize: 12, lineHeight: '18px' }}
+                    wrapperStyle={{ fontSize: 12, lineHeight: '18px', color: '#8891A6' }}
                   />
                 </PieChart>
               </ResponsiveContainer>

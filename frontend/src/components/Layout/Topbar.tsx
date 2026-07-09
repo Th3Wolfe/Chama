@@ -10,10 +10,10 @@ const INTERVALO_POLLING_MS = 15000;
 const TITULO_BASE = 'Sistema de Chamados de TI';
 
 const TIPO_INFO: Record<Notificacao['tipo'], { titulo: string; cor: string; icone: string }> = {
-  novo_chamado: { titulo: 'Novo chamado aberto', cor: '#2F6FED', icone: '🆕' },
-  novo_comentario: { titulo: 'Novo comentário', cor: '#C9820A', icone: '💬' },
-  mudanca_status: { titulo: 'Status alterado', cor: '#8B5CF6', icone: '🔄' },
-  chamado_atribuido: { titulo: 'Chamado atribuído a você', cor: '#1D9A4B', icone: '🎯' },
+  novo_chamado: { titulo: 'Novo chamado aberto', cor: '#3B82F6', icone: '🆕' },
+  novo_comentario: { titulo: 'Novo comentário', cor: '#F5A623', icone: '💬' },
+  mudanca_status: { titulo: 'Status alterado', cor: '#A78BFA', icone: '🔄' },
+  chamado_atribuido: { titulo: 'Chamado atribuído a você', cor: '#22C55E', icone: '🎯' },
 };
 
 export function Topbar({ titulo, subtitulo }: { titulo: string; subtitulo?: string }) {
