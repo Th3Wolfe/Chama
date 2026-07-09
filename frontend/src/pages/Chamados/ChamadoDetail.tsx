@@ -2,12 +2,19 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppLayout } from '../../components/Layout/AppLayout';
 import { StatusBadge, PrioridadeBadge } from '../../components/Badge';
-import { api } from '../../api/client';
+import { api, API_URL } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { POLLING_MS } from '../../config/polling';
 import type { Categoria, ChamadoDetalhe, Equipamento, StatusChamado, Usuario } from '../../api/types';
 
 function formatarDataHora(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatarTamanho(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function ChamadoDetail() {
@@ -23,6 +30,13 @@ export function ChamadoDetail() {
   const [novoComentario, setNovoComentario] = useState('');
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [novoAnexo, setNovoAnexo] = useState<File | null>(null);
+  const [enviandoAnexo, setEnviandoAnexo] = useState(false);
+  const [erroAnexo, setErroAnexo] = useState<string | null>(null);
+  const [editandoChamado, setEditandoChamado] = useState(false);
+  const [tituloRascunho, setTituloRascunho] = useState('');
+  const [descricaoRascunho, setDescricaoRascunho] = useState('');
+  const [erroEdicaoChamado, setErroEdicaoChamado] = useState<string | null>(null);
 
   async function recarregar() {
     const { data } = await api.get<ChamadoDetalhe>(`/chamados/${id}`);
@@ -37,6 +51,30 @@ export function ChamadoDetail() {
       requests.push(api.get<Equipamento[]>('/equipamentos').then((r) => setEquipamentos(r.data)));
     }
     Promise.all(requests).finally(() => setCarregando(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // Conversa, histórico e anexos se atualizam sozinhos a cada 1s — sem precisar
+  // de F5 para ver o comentário/anexo que outra pessoa acabou de enviar.
+  useEffect(() => {
+    if (!id) return;
+    const intervalo = setInterval(() => {
+      recarregar().catch(() => {
+        // silencioso: uma falha pontual de polling não deve interromper a tela
+      });
+    }, POLLING_MS);
+
+    function aoFocar() {
+      if (document.visibilityState === 'visible') recarregar().catch(() => {});
+    }
+    document.addEventListener('visibilitychange', aoFocar);
+    window.addEventListener('focus', aoFocar);
+
+    return () => {
+      clearInterval(intervalo);
+      document.removeEventListener('visibilitychange', aoFocar);
+      window.removeEventListener('focus', aoFocar);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -61,6 +99,35 @@ export function ChamadoDetail() {
     }
   }
 
+  function iniciarEdicaoChamado() {
+    if (!chamado) return;
+    setTituloRascunho(chamado.titulo);
+    setDescricaoRascunho(chamado.descricao);
+    setErroEdicaoChamado(null);
+    setEditandoChamado(true);
+  }
+
+  function cancelarEdicaoChamado() {
+    setEditandoChamado(false);
+    setErroEdicaoChamado(null);
+  }
+
+  async function handleSalvarEdicaoChamado(e: FormEvent) {
+    e.preventDefault();
+    if (!tituloRascunho.trim() || !descricaoRascunho.trim()) return;
+    setSalvando(true);
+    setErroEdicaoChamado(null);
+    try {
+      await api.patch(`/chamados/${id}`, { titulo: tituloRascunho.trim(), descricao: descricaoRascunho.trim() });
+      await recarregar();
+      setEditandoChamado(false);
+    } catch (err: any) {
+      setErroEdicaoChamado(err?.response?.data?.erro || 'Não foi possível salvar as alterações.');
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   async function handleComentar(e: FormEvent) {
     e.preventDefault();
     if (!novoComentario.trim()) return;
@@ -72,6 +139,34 @@ export function ChamadoDetail() {
     } finally {
       setSalvando(false);
     }
+  }
+
+  async function handleEnviarAnexo(e: FormEvent) {
+    e.preventDefault();
+    if (!novoAnexo) return;
+    setErroAnexo(null);
+    setEnviandoAnexo(true);
+    try {
+      const form = new FormData();
+      form.append('arquivo', novoAnexo);
+      await api.post(`/chamados/${id}/anexos`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setNovoAnexo(null);
+      (document.getElementById('novo-anexo') as HTMLInputElement | null)?.value && ((document.getElementById('novo-anexo') as HTMLInputElement).value = '');
+      await recarregar();
+    } catch (err: any) {
+      setErroAnexo(err?.response?.data?.erro || 'Não foi possível enviar o anexo.');
+    } finally {
+      setEnviandoAnexo(false);
+    }
+  }
+
+  async function handleExcluirAnexo(anexoId: number) {
+    const confirmado = window.confirm('Excluir este anexo permanentemente?');
+    if (!confirmado) return;
+    await api.delete(`/chamados/${id}/anexos/${anexoId}`);
+    await recarregar();
   }
 
   async function handleExcluir() {
@@ -113,17 +208,54 @@ export function ChamadoDetail() {
                 <StatusBadge status={chamado.status} />
                 <PrioridadeBadge prioridade={chamado.prioridade_atual} />
               </div>
-              {souDono && chamado.status !== 'resolvido' && (
-                <button className="btn btn--primary" disabled={salvando} onClick={handleResolver}>
-                  Marcar como resolvido
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {podeComentar && !editandoChamado && (
+                  <button className="btn btn--secondary" disabled={salvando} onClick={iniciarEdicaoChamado}>
+                    ✏️ Editar
+                  </button>
+                )}
+                {souDono && chamado.status !== 'resolvido' && (
+                  <button className="btn btn--primary" disabled={salvando} onClick={handleResolver}>
+                    Marcar como resolvido
+                  </button>
+                )}
+              </div>
             </div>
-            <p>{chamado.descricao}</p>
-            {chamado.equipamento_nome && (
-              <p className="text-muted" style={{ fontSize: 13, marginTop: 10 }}>
-                🖥️ Equipamento: {chamado.equipamento_nome}
-              </p>
+
+            {editandoChamado ? (
+              <form onSubmit={handleSalvarEdicaoChamado} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="form-field">
+                  <label>Título</label>
+                  <input value={tituloRascunho} onChange={(e) => setTituloRascunho(e.target.value)} />
+                </div>
+                <div className="form-field">
+                  <label>Descrição</label>
+                  <textarea
+                    rows={4}
+                    style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: 10, padding: '10px 12px', fontFamily: 'inherit', fontSize: 14, resize: 'vertical' }}
+                    value={descricaoRascunho}
+                    onChange={(e) => setDescricaoRascunho(e.target.value)}
+                  />
+                </div>
+                {erroEdicaoChamado && <p style={{ color: '#F87171', fontSize: 13 }}>{erroEdicaoChamado}</p>}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn--primary" type="submit" disabled={salvando || !tituloRascunho.trim() || !descricaoRascunho.trim()}>
+                    Salvar
+                  </button>
+                  <button className="btn btn--secondary" type="button" disabled={salvando} onClick={cancelarEdicaoChamado}>
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <p>{chamado.descricao}</p>
+                {chamado.equipamento_nome && (
+                  <p className="text-muted" style={{ fontSize: 13, marginTop: 10 }}>
+                    🖥️ Equipamento: {chamado.equipamento_nome}
+                  </p>
+                )}
+              </>
             )}
           </div>
 
@@ -152,6 +284,50 @@ export function ChamadoDetail() {
                 <button className="btn btn--primary" type="submit" disabled={salvando}>Enviar</button>
               </form>
             )}
+          </div>
+
+          <div className="card" style={{ padding: 20 }}>
+            <h3 className="card__title" style={{ marginBottom: 12 }}>Anexos</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              {chamado.anexos.length === 0 && <p className="text-muted">Nenhum anexo ainda.</p>}
+              {chamado.anexos.map((a) => {
+                const podeExcluir = isAdmin || a.enviado_por === usuario?.id;
+                return (
+                  <div key={a.id} className="flex-between" style={{ fontSize: 14 }}>
+                    <a
+                      href={`${API_URL}/chamados/${chamado.id}/anexos/${a.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      📎 {a.nome_arquivo} <span className="text-muted">({formatarTamanho(a.tamanho_bytes)})</span>
+                    </a>
+                    {podeExcluir && (
+                      <button
+                        className="btn btn--secondary"
+                        style={{ padding: '2px 10px', fontSize: 12 }}
+                        onClick={() => handleExcluirAnexo(a.id)}
+                      >
+                        Excluir
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {podeComentar && (
+              <form onSubmit={handleEnviarAnexo} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  id="novo-anexo"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  onChange={(e) => setNovoAnexo(e.target.files?.[0] ?? null)}
+                />
+                <button className="btn btn--primary" type="submit" disabled={!novoAnexo || enviandoAnexo}>
+                  {enviandoAnexo ? 'Enviando...' : 'Anexar'}
+                </button>
+              </form>
+            )}
+            {erroAnexo && <p style={{ color: '#F87171', fontSize: 13, marginTop: 8 }}>{erroAnexo}</p>}
           </div>
 
           <div className="card" style={{ padding: 20 }}>

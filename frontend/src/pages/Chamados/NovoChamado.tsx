@@ -113,8 +113,13 @@ export function NovoChamado() {
           </div>
 
           <div className="form-field">
-            <label htmlFor="anexo">Anexo (opcional, imagem — até 50MB)</label>
-            <input id="anexo" type="file" accept="image/*" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
+            <label htmlFor="anexo">Anexo (opcional, imagem/PDF/Word/Excel/texto — até 50MB)</label>
+            <input
+              id="anexo"
+              type="file"
+              accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+              onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
+            />
           </div>
 
           {erro && <p style={{ color: '#F87171', fontSize: 13, marginBottom: 12 }}>{erro}</p>}

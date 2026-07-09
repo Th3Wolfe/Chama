@@ -19,6 +19,7 @@ import { QuickActions } from '../components/QuickActions';
 import { PrioridadeBadge } from '../components/Badge';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { POLLING_MS } from '../config/polling';
 import type { Chamado, DashboardData } from '../api/types';
 
 const CORES_CATEGORIA = ['#3B82F6', '#22C55E', '#F5A623', '#A78BFA', '#EF4444', '#8892A8'];
@@ -85,8 +86,8 @@ export function Dashboard() {
   useEffect(() => {
     carregar();
 
-    // Atualiza sozinho a cada 15s (mesmo intervalo do sino de notificações)
-    const intervalo = setInterval(carregar, 15000);
+    // Atualiza sozinho a cada 1s (mesmo intervalo do sino de notificações)
+    const intervalo = setInterval(carregar, POLLING_MS);
 
     // E também assim que o admin volta pra essa aba — sem precisar esperar
     // o próximo ciclo do polling nem apertar F5.

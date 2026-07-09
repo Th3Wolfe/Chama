@@ -4,9 +4,10 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationsPanel } from '../NotificationsPanel';
 import { pushToast } from '../Toast';
+import { POLLING_MS } from '../../config/polling';
 import type { Notificacao, ResultadoBusca } from '../../api/types';
 
-const INTERVALO_POLLING_MS = 15000;
+const INTERVALO_POLLING_MS = POLLING_MS;
 const TITULO_BASE = 'Sistema de Chamados de TI';
 const DEBOUNCE_BUSCA_MS = 300;
 

@@ -160,12 +160,29 @@ router.get('/:id', requireAuth, async (req, res) => {
   });
 });
 
-// --- Atualizar chamado: status, categoria, responsável, prioridade (admin - RF10/RF11/RF12) ---
-router.patch('/:id', requireAdmin, async (req, res) => {
+// --- Atualizar chamado: status, categoria, responsável, prioridade (admin - RF10/RF11/RF12)
+//     título e descrição (admin OU dono do chamado, para corrigir erros de digitação) ---
+router.patch('/:id', requireAuth, async (req, res) => {
   const chamado = await buscarChamadoOuFalhar(req.params.id, res);
   if (!chamado) return;
 
-  const { status, categoria_id, responsavel_id, prioridade_atual, equipamento_id } = req.body;
+  const isAdmin = req.user.perfil === 'admin';
+  const souDono = chamado.aberto_por === req.user.id;
+  if (!isAdmin && !souDono) {
+    return res.status(403).json({ erro: 'Você não tem acesso a este chamado.' });
+  }
+
+  const { status, categoria_id, responsavel_id, prioridade_atual, equipamento_id, titulo, descricao } = req.body;
+
+  // Campos de gestão (status, categoria, prioridade, responsável, equipamento)
+  // continuam exclusivos do admin — só título/descrição também podem ser
+  // corrigidos por quem abriu o chamado.
+  const tentouCampoDeGestao = [status, categoria_id, responsavel_id, prioridade_atual, equipamento_id]
+    .some((v) => v !== undefined);
+  if (!isAdmin && tentouCampoDeGestao) {
+    return res.status(403).json({ erro: 'Somente um administrador pode alterar esses campos.' });
+  }
+
   const campos = [];
   const valores = [];
   let i = 1;
@@ -174,6 +191,14 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   if (responsavel_id !== undefined) { campos.push(`responsavel_id = $${i++}`); valores.push(responsavel_id); }
   if (prioridade_atual !== undefined) { campos.push(`prioridade_atual = $${i++}`); valores.push(prioridade_atual); }
   if (equipamento_id !== undefined) { campos.push(`equipamento_id = $${i++}`); valores.push(equipamento_id); }
+  if (titulo !== undefined) {
+    if (!titulo.trim()) return res.status(400).json({ erro: 'Título não pode ficar em branco.' });
+    campos.push(`titulo = $${i++}`); valores.push(titulo.trim());
+  }
+  if (descricao !== undefined) {
+    if (!descricao.trim()) return res.status(400).json({ erro: 'Descrição não pode ficar em branco.' });
+    campos.push(`descricao = $${i++}`); valores.push(descricao.trim());
+  }
   if (status !== undefined) {
     campos.push(`status = $${i++}`);
     valores.push(status);
@@ -265,6 +290,57 @@ router.post('/:id/anexos', requireAuth, upload.single('arquivo'), async (req, re
     [chamado.id, comentario_id || null, req.file.originalname, req.file.path, req.file.size, req.user.id]
   );
   res.status(201).json(rows[0]);
+});
+
+// --- Baixar anexo (RF05) ---
+// Rota protegida em vez de `express.static`: precisa checar se quem está
+// pedindo é o dono do chamado ou admin, senão qualquer usuário logado
+// poderia baixar anexo de chamado de outra pessoa só sabendo o id.
+router.get('/:id/anexos/:anexoId', requireAuth, async (req, res) => {
+  const chamado = await buscarChamadoOuFalhar(req.params.id, res);
+  if (!chamado) return;
+  if (req.user.perfil !== 'admin' && chamado.aberto_por !== req.user.id) {
+    return res.status(403).json({ erro: 'Você não tem acesso a este chamado.' });
+  }
+
+  const { rows } = await pool.query(
+    'SELECT * FROM anexos WHERE id = $1 AND chamado_id = $2',
+    [req.params.anexoId, chamado.id]
+  );
+  if (rows.length === 0) return res.status(404).json({ erro: 'Anexo não encontrado.' });
+  const anexo = rows[0];
+
+  if (!fs.existsSync(anexo.caminho)) {
+    return res.status(404).json({ erro: 'Arquivo não encontrado no servidor (pode ter sido removido).' });
+  }
+
+  // res.download define o Content-Disposition com o nome original do
+  // arquivo, então o navegador salva com o nome certo em vez do nome
+  // aleatório usado no disco.
+  res.download(anexo.caminho, anexo.nome_arquivo);
+});
+
+// --- Excluir um anexo específico (admin ou quem enviou) ---
+router.delete('/:id/anexos/:anexoId', requireAuth, async (req, res) => {
+  const chamado = await buscarChamadoOuFalhar(req.params.id, res);
+  if (!chamado) return;
+
+  const { rows } = await pool.query(
+    'SELECT * FROM anexos WHERE id = $1 AND chamado_id = $2',
+    [req.params.anexoId, chamado.id]
+  );
+  if (rows.length === 0) return res.status(404).json({ erro: 'Anexo não encontrado.' });
+  const anexo = rows[0];
+
+  const podeExcluir = req.user.perfil === 'admin' || anexo.enviado_por === req.user.id;
+  if (!podeExcluir) {
+    return res.status(403).json({ erro: 'Você só pode excluir anexos que você mesmo enviou.' });
+  }
+
+  await pool.query('DELETE FROM anexos WHERE id = $1', [anexo.id]);
+  fs.unlink(anexo.caminho, () => {}); // best-effort
+
+  res.status(204).send();
 });
 
 // --- Excluir chamado (admin) ---

@@ -1,5 +1,11 @@
 require('dotenv').config();
 const express = require('express');
+// Faz com que erros/rejeições dentro de rotas `async` cheguem automaticamente
+// ao middleware de erro abaixo. Sem isso, no Express 4, um `throw` (ou uma
+// query do pg que rejeita) dentro de uma rota async vira uma promise
+// rejeitada sem handler: a requisição nunca recebe resposta e fica pendurada
+// no cliente. Precisa ser importado logo após o `express`, antes das rotas.
+require('express-async-errors');
 const session = require('express-session');
 const cors = require('cors');
 const passport = require('./passport-config');
@@ -48,9 +54,32 @@ app.use('/notificacoes', notificacoesRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/relatorios', relatoriosRoutes);
 
-// Tratamento de erro genérico (evita vazar stack trace ao usuário)
+// Tratamento de erro genérico (evita vazar stack trace ao usuário).
+// Antes disso, os erros só chegavam aqui em pontos que faziam try/catch
+// manual (poucos). Com `express-async-errors` (require no topo do arquivo),
+// qualquer rejeição dentro de uma rota `async` também cai aqui agora.
 app.use((err, req, res, next) => {
   console.error(err);
+
+  // Erros de validação do multer (arquivo grande demais) ou do nosso
+  // fileFilter (extensão não permitida) já vêm com uma mensagem amigável.
+  if (err.name === 'MulterError' || err.status === 400) {
+    return res.status(400).json({ erro: err.message });
+  }
+
+  // Códigos de erro do PostgreSQL que representam entrada inválida do
+  // cliente (não bug do servidor) — devolvemos 400 com mensagem específica
+  // em vez do genérico 500.
+  const ERROS_PG = {
+    '23503': 'Referência inválida: um dos IDs enviados não existe (ex: categoria, setor ou responsável).',
+    '23505': 'Já existe um registro com esse valor único.',
+    '22P02': 'Um dos valores enviados está em formato inválido.',
+    '23514': 'Um dos valores enviados não é permitido (viola uma regra do campo).',
+  };
+  if (err.code && ERROS_PG[err.code]) {
+    return res.status(400).json({ erro: ERROS_PG[err.code] });
+  }
+
   res.status(500).json({ erro: 'Erro interno do servidor.' });
 });
 

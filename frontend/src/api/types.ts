@@ -87,6 +87,7 @@ export interface Anexo {
   id: number;
   nome_arquivo: string;
   tamanho_bytes: number;
+  enviado_por: number;
   criado_em: string;
 }
 

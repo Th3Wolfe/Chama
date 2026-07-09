@@ -45,4 +45,22 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   res.json(rows[0]);
 });
 
+// Exclui categoria (admin). Se houver chamados usando essa categoria, o banco
+// bloqueia a exclusão (FK) — nesse caso orientamos a desativar em vez de excluir.
+router.delete('/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM categorias WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ erro: 'Categoria não encontrada.' });
+    res.status(204).send();
+  } catch (err) {
+    if (err.code === '23503') {
+      return res.status(409).json({
+        erro: 'Esta categoria está em uso por um ou mais chamados e não pode ser excluída. Desative-a em vez disso.',
+      });
+    }
+    throw err;
+  }
+});
+
 module.exports = router;

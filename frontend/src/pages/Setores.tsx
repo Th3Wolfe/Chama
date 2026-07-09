@@ -1,12 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { AppLayout } from '../components/Layout/AppLayout';
 import { api } from '../api/client';
+import { POLLING_MS } from '../config/polling';
+import { pushToast } from '../components/Toast';
 import type { Setor } from '../api/types';
 
 export function Setores() {
   const [setores, setSetores] = useState<Setor[]>([]);
   const [nome, setNome] = useState('');
   const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+
+  const [edicaoId, setEdicaoId] = useState<number | null>(null);
+  const [edicaoNome, setEdicaoNome] = useState('');
 
   async function carregar() {
     const { data } = await api.get<Setor[]>('/setores?todas=1');
@@ -15,6 +21,11 @@ export function Setores() {
 
   useEffect(() => {
     carregar().finally(() => setCarregando(false));
+    // Lista se atualiza sozinha a cada 1s.
+    const intervalo = setInterval(() => {
+      carregar().catch(() => {});
+    }, POLLING_MS);
+    return () => clearInterval(intervalo);
   }, []);
 
   async function handleCriar(e: FormEvent) {
@@ -30,6 +41,50 @@ export function Setores() {
     await carregar();
   }
 
+  function iniciarEdicao(setor: Setor) {
+    setEdicaoId(setor.id);
+    setEdicaoNome(setor.nome);
+  }
+
+  function cancelarEdicao() {
+    setEdicaoId(null);
+  }
+
+  async function salvarEdicao(setor: Setor) {
+    if (!edicaoNome.trim()) return;
+    setSalvando(true);
+    try {
+      await api.patch(`/setores/${setor.id}`, { nome: edicaoNome.trim() });
+      await carregar();
+      setEdicaoId(null);
+    } catch (err: any) {
+      pushToast({
+        titulo: 'Não foi possível salvar',
+        descricao: err?.response?.data?.erro || 'Tente novamente.',
+        cor: '#EF4444',
+        icone: '⚠️',
+      });
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function handleExcluir(setor: Setor) {
+    const confirmado = window.confirm(`Excluir o setor "${setor.nome}" permanentemente?`);
+    if (!confirmado) return;
+    try {
+      await api.delete(`/setores/${setor.id}`);
+      await carregar();
+    } catch (err: any) {
+      pushToast({
+        titulo: 'Não foi possível excluir',
+        descricao: err?.response?.data?.erro || 'Tente novamente.',
+        cor: '#EF4444',
+        icone: '⚠️',
+      });
+    }
+  }
+
   return (
     <AppLayout titulo="Setores" subtitulo="Setores usados na abertura de chamados">
       <div className="grid-2">
@@ -41,15 +96,34 @@ export function Setores() {
             <tbody>
               {carregando && <tr><td colSpan={3} className="empty-state">Carregando...</td></tr>}
               {!carregando && setores.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.nome}</td>
-                  <td>{s.ativo ? 'Ativo' : 'Inativo'}</td>
-                  <td>
-                    <button className="btn btn--secondary" onClick={() => toggleAtivo(s)}>
-                      {s.ativo ? 'Desativar' : 'Ativar'}
-                    </button>
-                  </td>
-                </tr>
+                edicaoId === s.id ? (
+                  <tr key={s.id}>
+                    <td>
+                      <input value={edicaoNome} onChange={(e) => setEdicaoNome(e.target.value)} style={{ width: '100%' }} />
+                    </td>
+                    <td>{s.ativo ? 'Ativo' : 'Inativo'}</td>
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn--primary" disabled={salvando || !edicaoNome.trim()} onClick={() => salvarEdicao(s)}>
+                        Salvar
+                      </button>
+                      <button className="btn btn--secondary" disabled={salvando} onClick={cancelarEdicao}>
+                        Cancelar
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={s.id}>
+                    <td>{s.nome}</td>
+                    <td>{s.ativo ? 'Ativo' : 'Inativo'}</td>
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn--secondary" onClick={() => iniciarEdicao(s)}>Editar</button>
+                      <button className="btn btn--secondary" onClick={() => toggleAtivo(s)}>
+                        {s.ativo ? 'Desativar' : 'Ativar'}
+                      </button>
+                      <button className="btn btn--danger" onClick={() => handleExcluir(s)}>Excluir</button>
+                    </td>
+                  </tr>
+                )
               ))}
             </tbody>
           </table>

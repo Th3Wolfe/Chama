@@ -43,4 +43,22 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   res.json(rows[0]);
 });
 
+// Exclui setor (admin). Se houver chamados usando esse setor, o banco
+// bloqueia a exclusão (FK) — nesse caso orientamos a desativar em vez de excluir.
+router.delete('/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM setores WHERE id = $1', [id]);
+    if (rowCount === 0) return res.status(404).json({ erro: 'Setor não encontrado.' });
+    res.status(204).send();
+  } catch (err) {
+    if (err.code === '23503') {
+      return res.status(409).json({
+        erro: 'Este setor está em uso por um ou mais chamados e não pode ser excluído. Desative-o em vez disso.',
+      });
+    }
+    throw err;
+  }
+});
+
 module.exports = router;

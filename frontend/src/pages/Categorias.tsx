@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { AppLayout } from '../components/Layout/AppLayout';
 import { api } from '../api/client';
+import { POLLING_MS } from '../config/polling';
+import { pushToast } from '../components/Toast';
 import type { Categoria, Prioridade } from '../api/types';
 
 export function Categorias() {
@@ -8,6 +10,11 @@ export function Categorias() {
   const [nome, setNome] = useState('');
   const [prioridade, setPrioridade] = useState<Prioridade>('media');
   const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+
+  const [edicaoId, setEdicaoId] = useState<number | null>(null);
+  const [edicaoNome, setEdicaoNome] = useState('');
+  const [edicaoPrioridade, setEdicaoPrioridade] = useState<Prioridade>('media');
 
   async function carregar() {
     const { data } = await api.get<Categoria[]>('/categorias?todas=1');
@@ -16,6 +23,11 @@ export function Categorias() {
 
   useEffect(() => {
     carregar().finally(() => setCarregando(false));
+    // Lista se atualiza sozinha a cada 1s.
+    const intervalo = setInterval(() => {
+      carregar().catch(() => {});
+    }, POLLING_MS);
+    return () => clearInterval(intervalo);
   }, []);
 
   async function handleCriar(e: FormEvent) {
@@ -32,6 +44,51 @@ export function Categorias() {
     await carregar();
   }
 
+  function iniciarEdicao(categoria: Categoria) {
+    setEdicaoId(categoria.id);
+    setEdicaoNome(categoria.nome);
+    setEdicaoPrioridade(categoria.prioridade_padrao);
+  }
+
+  function cancelarEdicao() {
+    setEdicaoId(null);
+  }
+
+  async function salvarEdicao(categoria: Categoria) {
+    if (!edicaoNome.trim()) return;
+    setSalvando(true);
+    try {
+      await api.patch(`/categorias/${categoria.id}`, { nome: edicaoNome.trim(), prioridade_padrao: edicaoPrioridade });
+      await carregar();
+      setEdicaoId(null);
+    } catch (err: any) {
+      pushToast({
+        titulo: 'Não foi possível salvar',
+        descricao: err?.response?.data?.erro || 'Tente novamente.',
+        cor: '#EF4444',
+        icone: '⚠️',
+      });
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function handleExcluir(categoria: Categoria) {
+    const confirmado = window.confirm(`Excluir a categoria "${categoria.nome}" permanentemente?`);
+    if (!confirmado) return;
+    try {
+      await api.delete(`/categorias/${categoria.id}`);
+      await carregar();
+    } catch (err: any) {
+      pushToast({
+        titulo: 'Não foi possível excluir',
+        descricao: err?.response?.data?.erro || 'Tente novamente.',
+        cor: '#EF4444',
+        icone: '⚠️',
+      });
+    }
+  }
+
   return (
     <AppLayout titulo="Categorias" subtitulo="Categorias usadas na abertura de chamados">
       <div className="grid-2">
@@ -43,16 +100,42 @@ export function Categorias() {
             <tbody>
               {carregando && <tr><td colSpan={4} className="empty-state">Carregando...</td></tr>}
               {!carregando && categorias.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.nome}</td>
-                  <td style={{ textTransform: 'capitalize' }}>{c.prioridade_padrao}</td>
-                  <td>{c.ativa ? 'Ativa' : 'Inativa'}</td>
-                  <td>
-                    <button className="btn btn--secondary" onClick={() => toggleAtiva(c)}>
-                      {c.ativa ? 'Desativar' : 'Ativar'}
-                    </button>
-                  </td>
-                </tr>
+                edicaoId === c.id ? (
+                  <tr key={c.id}>
+                    <td>
+                      <input value={edicaoNome} onChange={(e) => setEdicaoNome(e.target.value)} style={{ width: '100%' }} />
+                    </td>
+                    <td>
+                      <select value={edicaoPrioridade} onChange={(e) => setEdicaoPrioridade(e.target.value as Prioridade)}>
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                      </select>
+                    </td>
+                    <td>{c.ativa ? 'Ativa' : 'Inativa'}</td>
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn--primary" disabled={salvando || !edicaoNome.trim()} onClick={() => salvarEdicao(c)}>
+                        Salvar
+                      </button>
+                      <button className="btn btn--secondary" disabled={salvando} onClick={cancelarEdicao}>
+                        Cancelar
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={c.id}>
+                    <td>{c.nome}</td>
+                    <td style={{ textTransform: 'capitalize' }}>{c.prioridade_padrao}</td>
+                    <td>{c.ativa ? 'Ativa' : 'Inativa'}</td>
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn--secondary" onClick={() => iniciarEdicao(c)}>Editar</button>
+                      <button className="btn btn--secondary" onClick={() => toggleAtiva(c)}>
+                        {c.ativa ? 'Desativar' : 'Ativar'}
+                      </button>
+                      <button className="btn btn--danger" onClick={() => handleExcluir(c)}>Excluir</button>
+                    </td>
+                  </tr>
+                )
               ))}
             </tbody>
           </table>

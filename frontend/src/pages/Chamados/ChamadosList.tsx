@@ -4,6 +4,7 @@ import { AppLayout } from '../../components/Layout/AppLayout';
 import { StatusBadge, PrioridadeBadge } from '../../components/Badge';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { POLLING_MS } from '../../config/polling';
 import type { Chamado, ChamadosPaginados, StatusChamado } from '../../api/types';
 
 const ABAS: { label: string; status?: StatusChamado }[] = [
@@ -32,17 +33,33 @@ export function ChamadosList() {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    setCarregando(true);
-    const query = new URLSearchParams({ page: String(pagina), page_size: String(TAMANHO_PAGINA) });
-    if (statusAtivo) query.set('status', statusAtivo);
-    api
-      .get<ChamadosPaginados>(`/chamados?${query.toString()}`)
-      .then((res) => {
-        setChamados(res.data.dados);
-        setTotalPaginas(res.data.total_paginas);
-        setTotal(res.data.total);
-      })
-      .finally(() => setCarregando(false));
+    let cancelado = false;
+
+    function carregar(mostrarCarregando: boolean) {
+      if (mostrarCarregando) setCarregando(true);
+      const query = new URLSearchParams({ page: String(pagina), page_size: String(TAMANHO_PAGINA) });
+      if (statusAtivo) query.set('status', statusAtivo);
+      api
+        .get<ChamadosPaginados>(`/chamados?${query.toString()}`)
+        .then((res) => {
+          if (cancelado) return;
+          setChamados(res.data.dados);
+          setTotalPaginas(res.data.total_paginas);
+          setTotal(res.data.total);
+        })
+        .finally(() => {
+          if (!cancelado) setCarregando(false);
+        });
+    }
+
+    carregar(true);
+    // Lista se atualiza sozinha a cada 1s, sem o "piscar" do carregando.
+    const intervalo = setInterval(() => carregar(false), POLLING_MS);
+
+    return () => {
+      cancelado = true;
+      clearInterval(intervalo);
+    };
   }, [statusAtivo, pagina]);
 
   function mudarAba(status?: StatusChamado) {

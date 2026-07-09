@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { AppLayout } from '../components/Layout/AppLayout';
 import { api } from '../api/client';
+import { POLLING_MS } from '../config/polling';
 import type { Equipamento, Usuario } from '../api/types';
 
 export function Equipamentos() {
@@ -21,6 +22,12 @@ export function Equipamentos() {
   useEffect(() => {
     Promise.all([carregar(), api.get<Usuario[]>('/usuarios').then((r) => setUsuarios(r.data))])
       .finally(() => setCarregando(false));
+
+    // Lista se atualiza sozinha a cada 1s.
+    const intervalo = setInterval(() => {
+      carregar().catch(() => {});
+    }, POLLING_MS);
+    return () => clearInterval(intervalo);
   }, []);
 
   async function handleCriar(e: FormEvent) {
