@@ -1,0 +1,91 @@
+:root {
+  /* Cores base — extraídas do protótipo fornecido */
+  --color-bg: #EEF1F7;
+  --color-sidebar: #14233F;
+  --color-sidebar-hover: #1C2F52;
+  --color-sidebar-active: #24406E;
+  --color-sidebar-text: #B9C4D6;
+  --color-sidebar-text-active: #FFFFFF;
+
+  --color-primary: #2F6FED;
+  --color-primary-hover: #2559C7;
+  --color-primary-bg-soft: #E9F0FE;
+
+  --color-text: #16213A;
+  --color-text-muted: #6B7686;
+  --color-border: #DFE4EC;
+  --color-card-bg: #FFFFFF;
+
+  /* Status */
+  --color-status-aberto-bg: #E9F0FE;
+  --color-status-aberto-text: #2F6FED;
+  --color-status-andamento-bg: #FFF2DF;
+  --color-status-andamento-text: #C9820A;
+  --color-status-resolvido-bg: #E3F7EA;
+  --color-status-resolvido-text: #1D9A4B;
+
+  /* Prioridade — Alta é sólida e chamativa de propósito (precisa saltar aos
+     olhos numa lista de chamados); Média/Baixa ficam discretas por comparação,
+     mas com contraste suficiente pro fundo da página (--color-bg) pra não sumir. */
+  --color-priority-alta-bg: #E4373F;
+  --color-priority-alta-text: #FFFFFF;
+  --color-priority-media-bg: #FDECD1;
+  --color-priority-media-text: #B4720F;
+  --color-priority-baixa-bg: #D4F0DE;
+  --color-priority-baixa-text: #1F7A45;
+
+  /* Acentos de card (usados em StatCards e barras de destaque) */
+  --accent-blue: #2F6FED;
+  --accent-amber: #E3922A;
+  --accent-green: #1D9A4B;
+  --accent-purple: #8B5CF6;
+  --accent-red: #E4373F;
+
+  /* Tipografia */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 2px 6px rgba(16, 24, 40, 0.06);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Foco visível para acessibilidade */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

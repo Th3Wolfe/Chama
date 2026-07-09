@@ -1,0 +1,21 @@
+{
+  "name": "chamados-ti-backend",
+  "version": "1.0.0",
+  "description": "Backend do sistema de chamados de TI - Câmara Municipal de Itajubá",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.11.5",
+    "multer": "^2.0.1",
+    "pdfkit": "^0.15.0",
+    "dotenv": "^16.4.5",
+    "cors": "^2.8.5"
+  }
+}
