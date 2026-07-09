@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="./img/logo-chama-no-bg.png" alt="Chamados TI — Câmara Municipal de Itajubá" width="400">
+  <img src="./img/logo-chama-no-bg.png" alt="Chama - Chamados TI" width="400">
 </p>
 
 <h1 align="center">Chamados TI</h1>
 
 <p align="center">
-  Sistema de gestão de chamados de TI feito para a Câmara Municipal de Itajubá.<br>
+  Sistema de gestão de chamados de TI feito para órgãos públicos de médio e pequeno porte.<br>
   Abertura, acompanhamento e resolução de chamados com histórico auditável, dashboard e relatórios em PDF.
 </p>
 
