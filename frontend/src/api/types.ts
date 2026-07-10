@@ -117,13 +117,40 @@ export interface Notificacao {
   criado_em: string;
 }
 
+export interface ChamadoComSla extends Chamado {
+  sla_segundos_restantes: number | null;
+}
+
+export interface AtividadeRecente {
+  tipo: 'novo_chamado' | 'comentario' | 'mudanca_status';
+  chamado_id: number;
+  chamado_titulo: string;
+  autor_nome: string;
+  detalhe: string | null;
+  quando: string;
+}
+
+export interface MinhaFila {
+  aguardando_meu_atendimento: ChamadoComSla[];
+  cliente_respondeu: ChamadoComSla[];
+  sla_vencendo: ChamadoComSla[];
+  sem_responsavel: ChamadoComSla[];
+}
+
 export interface DashboardData {
   por_status: Record<StatusChamado, { total: number; sem_responsavel: number }>;
   tempo_medio_segundos: number | null;
+  tempo_medio_delta_pct: number | null;
   resolvidos_hoje: number;
+  resolvidos_hoje_delta_pct: number | null;
+  sla_dentro_prazo_pct: number | null;
+  sla_dentro_prazo_delta_pct: number | null;
   fila_sem_responsavel: Chamado[];
   chamados_abertos: Chamado[];
   chamados_em_andamento: Chamado[];
   por_categoria: { nome: string; total: number }[];
   serie_diaria: { dia: string; abertos: number; em_andamento: number; resolvidos: number }[];
+  prioridade_agora: ChamadoComSla | null;
+  minha_fila: MinhaFila;
+  atividade_recente: AtividadeRecente[];
 }

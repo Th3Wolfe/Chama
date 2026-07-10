@@ -167,7 +167,7 @@ export function UserHome() {
         <div className="card userhome-card">
           <div>
             <h3 className="userhome-card__title">Horário de atendimento</h3>
-            <p className="userhome-card__desc">Segunda a Sexta<br />08:00 – 18:00</p>
+            <p className="userhome-card__desc">Segunda a Sexta<br />12:00 – 18:00</p>
           </div>
           <div className="userhome-card__footer">
             <span className="userhome-card__icon userhome-card__icon--green">🕐</span>

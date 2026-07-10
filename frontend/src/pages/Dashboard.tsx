@@ -18,6 +18,9 @@ import { StatCard } from '../components/StatCard';
 import { QuickActions } from '../components/QuickActions';
 import { PrioridadeBadge } from '../components/Badge';
 import { ChamadoModal } from '../components/ChamadoModal';
+import { HeroPrioridadeAgora } from '../components/HeroPrioridadeAgora';
+import { MinhaFilaCard } from '../components/MinhaFilaCard';
+import { FeedAtividades } from '../components/FeedAtividades';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { POLLING_MS } from '../config/polling';
@@ -34,6 +37,19 @@ function formatarDuracao(segundos: number | null): string {
 
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+/** Card de indicador com variação percentual vs. ontem (verde = melhora, vermelho = piora). */
+function DeltaFooter({ pct, invertido = false, sufixo = ' vs. ontem' }: { pct: number | null; invertido?: boolean; sufixo?: string }) {
+  if (pct === null) return <p className="stat-card__delta stat-card__delta--neutral">Sem dado de ontem</p>;
+  if (pct === 0) return <p className="stat-card__delta stat-card__delta--neutral">Igual a ontem</p>;
+  const melhora = invertido ? pct < 0 : pct > 0;
+  const seta = pct > 0 ? '↑' : '↓';
+  return (
+    <p className={`stat-card__delta ${melhora ? 'stat-card__delta--up' : 'stat-card__delta--down'}`}>
+      {seta} {Math.abs(pct)}%{sufixo}
+    </p>
+  );
 }
 
 function TabelaChamados({ chamados, vazio, onAbrir }: { chamados: Chamado[]; vazio: string; onAbrir: (id: number) => void }) {
@@ -131,28 +147,44 @@ export function Dashboard() {
 
   const abertos = dados.por_status.aberto?.total ?? 0;
   const semResponsavel = dados.por_status.aberto?.sem_responsavel ?? 0;
-  const emAndamento = dados.por_status.em_andamento?.total ?? 0;
-  const aguardandoUsuario = dados.por_status.em_andamento?.sem_responsavel ?? 0;
   const listaAtual = aba === 'aberto' ? dados.chamados_abertos : dados.chamados_em_andamento;
 
   return (
-    <AppLayout titulo="Dashboard" subtitulo="Visão geral dos chamados de TI">
+    <AppLayout
+      titulo={`Bom dia${usuario ? `, ${usuario.nome.split(' ')[0]}` : ''} 👋`}
+      subtitulo="Visão geral dos chamados de TI"
+    >
+      {/* 1. O que precisa da minha atenção agora */}
+      <div style={{ marginBottom: 20 }}>
+        <HeroPrioridadeAgora chamado={dados.prioridade_agora} onAbrir={(id) => setChamadoAbertoId(id)} />
+      </div>
+
       <div className="dashboard-grid">
         <div>
+          {/* 2. O que eu tenho para fazer + 3. Feed de atividade, lado a lado */}
+          <div className="charts-row" style={{ marginBottom: 20 }}>
+            <MinhaFilaCard minhaFila={dados.minha_fila} onAbrirChamado={(id) => setChamadoAbertoId(id)} />
+            <FeedAtividades atividades={dados.atividade_recente} />
+          </div>
+
+          {/* 4. Como está a saúde do suporte — indicadores com tendência */}
           <div className="stat-grid">
             <StatCard
-              icon="📅" iconBg="var(--accent-blue)" accent="var(--accent-blue)" label="Abertos" value={abertos}
-              footer={<p className="stat-card__delta stat-card__delta--neutral">{semResponsavel} sem responsável</p>}
-            />
-            <StatCard
-              icon="🗓️" iconBg="var(--accent-amber)" accent="var(--accent-amber)" label="Em andamento" value={emAndamento}
-              footer={<p className="stat-card__delta stat-card__delta--neutral">{aguardandoUsuario} sem responsável</p>}
+              icon="🎯" iconBg="var(--accent-blue)" accent="var(--accent-blue)" label="SLA dentro do prazo"
+              value={dados.sla_dentro_prazo_pct !== null ? `${dados.sla_dentro_prazo_pct}%` : 'N/A'}
+              footer={<DeltaFooter pct={dados.sla_dentro_prazo_delta_pct} />}
             />
             <StatCard
               icon="✅" iconBg="var(--accent-green)" accent="var(--accent-green)" label="Resolvidos hoje" value={dados.resolvidos_hoje}
+              footer={<DeltaFooter pct={dados.resolvidos_hoje_delta_pct} />}
             />
             <StatCard
               icon="🕐" iconBg="var(--accent-purple)" accent="var(--accent-purple)" label="Tempo médio de resolução" value={formatarDuracao(dados.tempo_medio_segundos)}
+              footer={<DeltaFooter pct={dados.tempo_medio_delta_pct} invertido />}
+            />
+            <StatCard
+              icon="📅" iconBg="var(--accent-amber)" accent="var(--accent-amber)" label="Abertos" value={abertos}
+              footer={<p className="stat-card__delta stat-card__delta--neutral">{semResponsavel} sem responsável</p>}
             />
           </div>
 
@@ -220,6 +252,7 @@ export function Dashboard() {
             </div>
           </div>
 
+          {/* 5. Tabela — o detalhe fica por último, depois de todo o resumo */}
           <div className="card">
             <div className="card__header" style={{ paddingBottom: 12 }}>
               <div style={{ display: 'flex', gap: 8 }}>
