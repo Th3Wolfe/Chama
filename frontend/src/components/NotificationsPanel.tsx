@@ -1,4 +1,5 @@
 import { CheckCheck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import type { Notificacao } from '../api/types';
 
 const TIPO_INFO: Record<Notificacao['tipo'], { titulo: string; cor: string }> = {
@@ -28,6 +29,8 @@ export function NotificationsPanel({
   onMarcarTodasLidas?: () => void;
 }) {
   const temNaoLidas = notificacoes.some((n) => !n.lida);
+  const { usuario } = useAuth();
+  const isAdmin = usuario?.perfil === 'admin';
 
   return (
     <div className="card">
@@ -56,7 +59,7 @@ export function NotificationsPanel({
               <span className="notification-item__dot" style={{ background: info.cor }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p className="notification-item__title">{info.titulo}</p>
-                <p className="notification-item__desc">{n.chamado_titulo ?? `Chamado #${n.chamado_id}`}</p>
+                <p className="notification-item__desc">{n.chamado_titulo ?? (isAdmin ? `Chamado #${n.chamado_id}` : 'Chamado')}</p>
               </div>
               <span className="notification-item__time">{tempoRelativo(n.criado_em)}</span>
             </div>

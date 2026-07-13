@@ -287,7 +287,7 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
                 </span>
                 <div>
                   <div className="chamado-header__titulo">
-                    #{chamado.id} {chamado.titulo}{' '}
+                    {isAdmin && `#${chamado.id} `}{chamado.titulo}{' '}
                     <span style={{ marginLeft: 6, verticalAlign: 'middle', display: 'inline-block' }}>
                       <StatusBadge status={chamado.status} />
                     </span>
@@ -353,10 +353,14 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
                           <label>Equipamento</label>
                           <select value={chamado.equipamento_id ?? ''} disabled={salvando} onChange={(e) => handleAtualizar('equipamento_id', e.target.value)}>
                             <option value="">Nenhum</option>
-                            {equipamentos.map((eq) => (
+                            {/* Só equipamentos vinculados a quem abriu o chamado — mesma regra do backend. */}
+                            {equipamentos.filter((eq) => eq.usuario_id === chamado.aberto_por).map((eq) => (
                               <option key={eq.id} value={eq.id}>{eq.nome}{eq.numero_serie ? ` — nº ${eq.numero_serie}` : ''}</option>
                             ))}
                           </select>
+                          {equipamentos.filter((eq) => eq.usuario_id === chamado.aberto_por).length === 0 && (
+                            <p className="form-field__hint">{chamado.aberto_por_nome} não tem equipamentos vinculados.</p>
+                          )}
                         </div>
                         <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
                           <button className="btn btn--danger btn--block" disabled={salvando} onClick={handleExcluir}>

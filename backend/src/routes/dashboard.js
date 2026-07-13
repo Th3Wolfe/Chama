@@ -58,6 +58,14 @@ router.get('/', requireAdmin, async (req, res) => {
     tendenciaTempoMedio,
     tendenciaSla,
     atividadeRecente,
+    totalChamados,
+    criadosHoje,
+    criadosOntem,
+    andamentoHojeOntem,
+    aguardandoCliente,
+    resolvidosTotal,
+    alertasSla,
+    porSetor,
   ] = await Promise.all([
     pool.query(`SELECT * FROM vw_dashboard_admin`),
     pool.query(`
@@ -183,6 +191,48 @@ router.get('/', requireAdmin, async (req, res) => {
       ORDER BY quando DESC
       LIMIT 8
     `),
+    // Novo bloco de KPIs "estilo operação" (protótipo de alta fidelidade da Home).
+    pool.query(`SELECT COUNT(*)::int AS total FROM chamados`),
+    pool.query(`SELECT COUNT(*)::int AS total FROM chamados WHERE criado_em::date = CURRENT_DATE`),
+    pool.query(`SELECT COUNT(*)::int AS total FROM chamados WHERE criado_em::date = CURRENT_DATE - 1`),
+    // "Em andamento" (delta): chamados que entraram nesse status hoje vs ontem.
+    pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE alterado_em::date = CURRENT_DATE)::int AS hoje,
+        COUNT(*) FILTER (WHERE alterado_em::date = CURRENT_DATE - 1)::int AS ontem
+      FROM historico_status WHERE status_novo = 'em_andamento'
+    `),
+    // "Aguardando cliente": chamados em andamento cujo último comentário foi do
+    // responsável — ou seja, a bola está com o solicitante.
+    pool.query(`
+      WITH ultimo_comentario AS (
+        SELECT DISTINCT ON (chamado_id) chamado_id, autor_id
+        FROM comentarios ORDER BY chamado_id, criado_em DESC
+      )
+      SELECT COUNT(*)::int AS total
+      FROM chamados c
+      JOIN ultimo_comentario uc ON uc.chamado_id = c.id
+      WHERE c.status = 'em_andamento' AND uc.autor_id = c.responsavel_id
+    `),
+    pool.query(`SELECT COUNT(*)::int AS total FROM chamados WHERE status = 'resolvido'`),
+    // Alertas de SLA agrupados por faixa de urgência (para o painel "Alertas de SLA").
+    pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE sla_segundos_restantes < 0)::int AS critico,
+        COUNT(*) FILTER (WHERE sla_segundos_restantes >= 0 AND sla_segundos_restantes <= 7200)::int AS alto,
+        COUNT(*) FILTER (WHERE sla_segundos_restantes > 7200 AND sla_segundos_restantes <= 28800)::int AS medio
+      FROM (
+        SELECT EXTRACT(EPOCH FROM ((c.criado_em + ${SLA_INTERVALO}) - now()))::int AS sla_segundos_restantes
+        FROM chamados c WHERE c.status <> 'resolvido'
+      ) sub
+    `),
+    // Chamados por setor (mês atual) — alimenta o gráfico de barras horizontal.
+    pool.query(`
+      SELECT s.nome, COUNT(*)::int AS total
+      FROM chamados c JOIN setores s ON s.id = c.setor_id
+      WHERE date_trunc('month', c.criado_em) = date_trunc('month', CURRENT_DATE)
+      GROUP BY s.nome ORDER BY total DESC
+    `),
   ]);
 
   const porStatus = Object.fromEntries(
@@ -227,6 +277,15 @@ router.get('/', requireAdmin, async (req, res) => {
       sem_responsavel: filaSemResponsavel.rows,
     },
     atividade_recente: atividadeRecente.rows,
+    total_chamados: totalChamados.rows[0].total,
+    total_chamados_delta_pct: variacaoPercentual(criadosHoje.rows[0].total, criadosOntem.rows[0].total),
+    em_andamento_delta_pct: variacaoPercentual(andamentoHojeOntem.rows[0].hoje, andamentoHojeOntem.rows[0].ontem),
+    aguardando_cliente_total: aguardandoCliente.rows[0].total,
+    taxa_resolucao_pct: totalChamados.rows[0].total > 0
+      ? Math.round((resolvidosTotal.rows[0].total / totalChamados.rows[0].total) * 100)
+      : null,
+    alertas_sla: alertasSla.rows[0],
+    por_setor: porSetor.rows,
   });
 });
 

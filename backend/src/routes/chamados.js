@@ -183,6 +183,18 @@ router.patch('/:id', requireAuth, async (req, res) => {
     return res.status(403).json({ erro: 'Somente um administrador pode alterar esses campos.' });
   }
 
+  // Mesmo o admin só pode atribuir um equipamento que esteja vinculado ao
+  // usuário que abriu o chamado (evita atribuir o notebook de outra pessoa).
+  if (equipamento_id !== undefined && equipamento_id !== null) {
+    const equipamento = await pool.query(
+      'SELECT id FROM equipamentos WHERE id = $1 AND usuario_id = $2',
+      [equipamento_id, chamado.aberto_por]
+    );
+    if (equipamento.rows.length === 0) {
+      return res.status(400).json({ erro: 'Equipamento inválido ou não vinculado ao usuário que abriu o chamado.' });
+    }
+  }
+
   const campos = [];
   const valores = [];
   let i = 1;

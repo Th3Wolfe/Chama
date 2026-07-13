@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AppLayout } from '../../components/Layout/AppLayout';
 import { StatusBadge, PrioridadeBadge } from '../../components/Badge';
 import { ChamadoModal } from '../../components/ChamadoModal';
+import { NovoChamadoModal } from '../../components/NovoChamadoModal';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { POLLING_MS } from '../../config/polling';
@@ -22,7 +23,6 @@ function formatarData(iso: string): string {
 }
 
 export function ChamadosList() {
-  const navigate = useNavigate();
   const { usuario } = useAuth();
   const [params, setParams] = useSearchParams();
   const statusAtivo = params.get('status') as StatusChamado | null;
@@ -33,6 +33,7 @@ export function ChamadosList() {
   const [total, setTotal] = useState(0);
   const [carregando, setCarregando] = useState(true);
   const [chamadoAbertoId, setChamadoAbertoId] = useState<number | null>(null);
+  const [novoChamadoAberto, setNovoChamadoAberto] = useState(false);
 
   function carregar(mostrarCarregando: boolean) {
     if (mostrarCarregando) setCarregando(true);
@@ -90,7 +91,7 @@ export function ChamadosList() {
             );
           })}
         </div>
-        <button className="btn btn--primary" onClick={() => navigate('/chamados/novo')}>
+        <button className="btn btn--primary" onClick={() => setNovoChamadoAberto(true)}>
           + Novo chamado
         </button>
       </div>
@@ -99,7 +100,8 @@ export function ChamadosList() {
         <table className="table">
           <thead>
             <tr>
-              <th>ID</th><th>Título</th><th>Setor</th><th>Categoria</th>
+              {isAdmin && <th>ID</th>}
+              <th>Título</th><th>Setor</th><th>Categoria</th>
               <th>Prioridade</th>
               {isAdmin && <th>Aberto por</th>}
               {isAdmin && <th>Responsável</th>}
@@ -108,15 +110,15 @@ export function ChamadosList() {
           </thead>
           <tbody>
             {carregando && (
-              <tr><td colSpan={9} className="empty-state">Carregando...</td></tr>
+              <tr><td colSpan={isAdmin ? 9 : 6} className="empty-state">Carregando...</td></tr>
             )}
             {!carregando && chamados.length === 0 && (
-              <tr><td colSpan={9} className="empty-state">Nenhum chamado encontrado.</td></tr>
+              <tr><td colSpan={isAdmin ? 9 : 6} className="empty-state">Nenhum chamado encontrado.</td></tr>
             )}
             {chamados.map((c) => (
               <tr key={c.id} className="clickable" onClick={() => setChamadoAbertoId(c.id)}>
-                <td className={`td--prioridade-${c.prioridade_atual}`}>#{c.id}</td>
-                <td>{c.titulo}</td>
+                {isAdmin && <td className={`td--prioridade-${c.prioridade_atual}`}>#{c.id}</td>}
+                <td className={isAdmin ? undefined : `td--prioridade-${c.prioridade_atual}`}>{c.titulo}</td>
                 <td>{c.setor_nome}</td>
                 <td>{c.categoria_nome}</td>
                 <td><PrioridadeBadge prioridade={c.prioridade_atual} /></td>
@@ -164,6 +166,17 @@ export function ChamadosList() {
           chamadoId={chamadoAbertoId}
           onFechar={() => setChamadoAbertoId(null)}
           onMudou={() => carregar(false)}
+        />
+      )}
+
+      {novoChamadoAberto && (
+        <NovoChamadoModal
+          onFechar={() => setNovoChamadoAberto(false)}
+          onCriado={(id) => {
+            setNovoChamadoAberto(false);
+            carregar(false);
+            setChamadoAbertoId(id);
+          }}
         />
       )}
     </AppLayout>
