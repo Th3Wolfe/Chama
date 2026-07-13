@@ -1,21 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
-  YAxis,
-  CartesianGrid,
   Tooltip,
   PieChart,
   Pie,
   Cell,
   Legend,
 } from 'recharts';
+import { ArrowUp, ArrowDown, ArrowRight, CalendarDays } from 'lucide-react';
 import { AppLayout } from '../components/Layout/AppLayout';
-import { StatCard } from '../components/StatCard';
-import { QuickActions } from '../components/QuickActions';
 import { PrioridadeBadge } from '../components/Badge';
 import { ChamadoModal } from '../components/ChamadoModal';
 import { HeroPrioridadeAgora } from '../components/HeroPrioridadeAgora';
@@ -24,7 +21,8 @@ import { FeedAtividades } from '../components/FeedAtividades';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { POLLING_MS } from '../config/polling';
-import type { Chamado, DashboardData } from '../api/types';
+import { formatarSla } from '../utils/sla';
+import type { ChamadoComSla, DashboardData } from '../api/types';
 
 const CORES_CATEGORIA = ['#3B82F6', '#22C55E', '#F5A623', '#A78BFA', '#EF4444', '#8892A8'];
 
@@ -39,45 +37,31 @@ function formatarData(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
-/** Card de indicador com variação percentual vs. ontem (verde = melhora, vermelho = piora). */
-function DeltaFooter({ pct, invertido = false, sufixo = ' vs. ontem' }: { pct: number | null; invertido?: boolean; sufixo?: string }) {
-  if (pct === null) return <p className="stat-card__delta stat-card__delta--neutral">Sem dado de ontem</p>;
-  if (pct === 0) return <p className="stat-card__delta stat-card__delta--neutral">Igual a ontem</p>;
+/** Texto de variação para o painel "Indicadores de hoje" (verde = melhora, vermelho = piora). */
+function MiniDelta({ pct, invertido = false }: { pct: number | null; invertido?: boolean }) {
+  if (pct === null) return <p className="mini-stat__delta mini-stat__delta--neutral">Sem dado de ontem</p>;
+  if (pct === 0) return <p className="mini-stat__delta mini-stat__delta--neutral">Igual a ontem</p>;
   const melhora = invertido ? pct < 0 : pct > 0;
-  const seta = pct > 0 ? '↑' : '↓';
+  const Seta = pct > 0 ? ArrowUp : ArrowDown;
+  // Quando o valor de ontem é muito baixo (perto de zero), a variação percentual
+  // explode (ex.: 14216%) e quebra o layout do card. Acima de 999% não agrega
+  // informação útil, então mostramos um teto em vez do número exato.
+  const abs = Math.abs(pct);
+  const texto = abs > 999 ? '999%+' : `${abs}%`;
   return (
-    <p className={`stat-card__delta ${melhora ? 'stat-card__delta--up' : 'stat-card__delta--down'}`}>
-      {seta} {Math.abs(pct)}%{sufixo}
+    <p className={`mini-stat__delta ${melhora ? 'mini-stat__delta--up' : 'mini-stat__delta--down'}`}>
+      <Seta size={12} strokeWidth={2.5} style={{ verticalAlign: '-1px' }} /> {texto} vs. ontem
     </p>
   );
 }
 
-function TabelaChamados({ chamados, vazio, onAbrir }: { chamados: Chamado[]; vazio: string; onAbrir: (id: number) => void }) {
+function SlaCell({ segundos }: { segundos: number | null }) {
+  const sla = formatarSla(segundos);
+  if (!sla) return <span className="text-muted">—</span>;
   return (
-    <table className="table">
-      <thead>
-        <tr>
-          <th>ID</th><th>Título</th><th>Setor</th><th>Categoria</th>
-          <th>Prioridade</th><th>Responsável</th><th>Criado em</th>
-        </tr>
-      </thead>
-      <tbody>
-        {chamados.length === 0 && (
-          <tr><td colSpan={7} className="empty-state">{vazio}</td></tr>
-        )}
-        {chamados.map((c) => (
-          <tr key={c.id} className="clickable" onClick={() => onAbrir(c.id)}>
-            <td className={`td--prioridade-${c.prioridade_atual}`}>#{c.id}</td>
-            <td>{c.titulo}</td>
-            <td>{c.setor_nome}</td>
-            <td>{c.categoria_nome}</td>
-            <td><PrioridadeBadge prioridade={c.prioridade_atual} /></td>
-            <td>{c.responsavel_nome ?? '—'}</td>
-            <td>{formatarData(c.criado_em)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <span className={`chip${sla.critico ? ' chip--alerta' : ''}`} style={{ fontSize: 11 }}>
+      {sla.vencido ? `Vencido há ${sla.texto}` : `Vence em ${sla.texto}`}
+    </span>
   );
 }
 
@@ -87,8 +71,8 @@ export function Dashboard() {
   const [dados, setDados] = useState<DashboardData | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [aba, setAba] = useState<'aberto' | 'em_andamento'>('aberto');
   const [chamadoAbertoId, setChamadoAbertoId] = useState<number | null>(null);
+  const [janelaGrafico, setJanelaGrafico] = useState<7 | 14>(7);
 
   async function carregar() {
     try {
@@ -103,18 +87,12 @@ export function Dashboard() {
 
   useEffect(() => {
     carregar();
-
-    // Atualiza sozinho a cada 1s (mesmo intervalo do sino de notificações)
     const intervalo = setInterval(carregar, POLLING_MS);
-
-    // E também assim que o admin volta pra essa aba — sem precisar esperar
-    // o próximo ciclo do polling nem apertar F5.
     function aoFocar() {
       if (document.visibilityState === 'visible') carregar();
     }
     document.addEventListener('visibilitychange', aoFocar);
     window.addEventListener('focus', aoFocar);
-
     return () => {
       clearInterval(intervalo);
       document.removeEventListener('visibilitychange', aoFocar);
@@ -123,11 +101,13 @@ export function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function assumir(chamadoId: number) {
-    if (!usuario) return;
-    await api.patch(`/chamados/${chamadoId}`, { responsavel_id: usuario.id, status: 'em_andamento' });
-    await carregar();
-  }
+  const serieGrafico = useMemo(() => {
+    if (!dados) return [];
+    // A API sempre traz 7 dias; "14 dias" é só um placeholder de UI por ora
+    // (o seletor existe para quando o backend passar a trazer uma janela maior).
+    return dados.serie_sete_dias;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dados, janelaGrafico]);
 
   if (carregando) {
     return (
@@ -145,164 +125,158 @@ export function Dashboard() {
     );
   }
 
-  const abertos = dados.por_status.aberto?.total ?? 0;
-  const semResponsavel = dados.por_status.aberto?.sem_responsavel ?? 0;
-  const listaAtual = aba === 'aberto' ? dados.chamados_abertos : dados.chamados_em_andamento;
-
   return (
     <AppLayout
       titulo={`Bom dia${usuario ? `, ${usuario.nome.split(' ')[0]}` : ''} 👋`}
       subtitulo="Visão geral dos chamados de TI"
     >
-      {/* 1. O que precisa da minha atenção agora */}
-      <div style={{ marginBottom: 20 }}>
+      {/*
+        1. O que precisa da minha atenção agora, lado a lado com os indicadores
+        do dia — ambos são leitura rápida de "como estamos agora" e ganham
+        destaque compartilhando a primeira faixa da tela.
+      */}
+      <div className="dashboard-grid" style={{ marginBottom: 20, alignItems: 'stretch' }}>
         <HeroPrioridadeAgora chamado={dados.prioridade_agora} onAbrir={(id) => setChamadoAbertoId(id)} />
-      </div>
 
-      <div className="dashboard-grid">
-        <div>
-          {/* 2. O que eu tenho para fazer + 3. Feed de atividade, lado a lado */}
-          <div className="charts-row" style={{ marginBottom: 20 }}>
-            <MinhaFilaCard minhaFila={dados.minha_fila} onAbrirChamado={(id) => setChamadoAbertoId(id)} />
-            <FeedAtividades atividades={dados.atividade_recente} />
+        {/* Indicadores de hoje */}
+        <div className="card">
+          <div className="card__header" style={{ paddingBottom: 4 }}>
+            <h3 className="card__title">Indicadores de hoje</h3>
           </div>
-
-          {/* 4. Como está a saúde do suporte — indicadores com tendência */}
-          <div className="stat-grid">
-            <StatCard
-              icon="🎯" iconBg="var(--accent-blue)" accent="var(--accent-blue)" label="SLA dentro do prazo"
-              value={dados.sla_dentro_prazo_pct !== null ? `${dados.sla_dentro_prazo_pct}%` : 'N/A'}
-              footer={<DeltaFooter pct={dados.sla_dentro_prazo_delta_pct} />}
-            />
-            <StatCard
-              icon="✅" iconBg="var(--accent-green)" accent="var(--accent-green)" label="Resolvidos hoje" value={dados.resolvidos_hoje}
-              footer={<DeltaFooter pct={dados.resolvidos_hoje_delta_pct} />}
-            />
-            <StatCard
-              icon="🕐" iconBg="var(--accent-purple)" accent="var(--accent-purple)" label="Tempo médio de resolução" value={formatarDuracao(dados.tempo_medio_segundos)}
-              footer={<DeltaFooter pct={dados.tempo_medio_delta_pct} invertido />}
-            />
-            <StatCard
-              icon="📅" iconBg="var(--accent-amber)" accent="var(--accent-amber)" label="Abertos" value={abertos}
-              footer={<p className="stat-card__delta stat-card__delta--neutral">{semResponsavel} sem responsável</p>}
-            />
-          </div>
-
-          <div className="charts-row">
-            <div className="card" style={{ padding: 20 }}>
-              <div className="flex-between" style={{ marginBottom: 12 }}>
-                <h3 className="card__title">Chamados por período (últimos 30 dias)</h3>
-              </div>
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={dados.serie_diaria}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis
-                    dataKey="dia"
-                    tickFormatter={(d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                    fontSize={12}
-                    tick={{ fill: '#8891A6' }}
-                    axisLine={{ stroke: '#212A3E' }}
-                    tickLine={{ stroke: '#212A3E' }}
-                  />
-                  <YAxis
-                    fontSize={12}
-                    allowDecimals={false}
-                    tick={{ fill: '#8891A6' }}
-                    axisLine={{ stroke: '#212A3E' }}
-                    tickLine={{ stroke: '#212A3E' }}
-                  />
-                  <Tooltip
-                    labelFormatter={(d) => new Date(d as string).toLocaleDateString('pt-BR')}
-                    contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }}
-                    labelStyle={{ color: '#8891A6' }}
-                  />
-                  <Legend wrapperStyle={{ color: '#8891A6', fontSize: 12 }} />
-                  <Line type="monotone" dataKey="abertos" name="Abertos" stroke="#3B82F6" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="em_andamento" name="Em andamento" stroke="#F5A623" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="resolvidos" name="Resolvidos" stroke="#22C55E" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+          <div className="mini-stat-grid">
+            <div className="mini-stat">
+              <p className="mini-stat__label">SLA dentro do prazo</p>
+              <p className="mini-stat__value">{dados.sla_dentro_prazo_pct !== null ? `${dados.sla_dentro_prazo_pct}%` : 'N/A'}</p>
+              <MiniDelta pct={dados.sla_dentro_prazo_delta_pct} />
             </div>
-
-            <div className="card" style={{ padding: 20, minWidth: 0 }}>
-              <h3 className="card__title" style={{ marginBottom: 12 }}>Chamados por categoria (mês)</h3>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                  <Pie
-                    data={dados.por_categoria}
-                    dataKey="total"
-                    nameKey="nome"
-                    innerRadius={50}
-                    outerRadius={75}
-                    cy="45%"
-                  >
-                    {dados.por_categoria.map((_, i) => (
-                      <Cell key={i} fill={CORES_CATEGORIA[i % CORES_CATEGORIA.length]} stroke="#10162A" />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }} />
-                  <Legend
-                    layout="horizontal"
-                    align="center"
-                    verticalAlign="bottom"
-                    wrapperStyle={{ fontSize: 12, lineHeight: '18px', color: '#8891A6' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="mini-stat">
+              <p className="mini-stat__label">Resolvidos hoje</p>
+              <p className="mini-stat__value">{dados.resolvidos_hoje}</p>
+              <MiniDelta pct={dados.resolvidos_hoje_delta_pct} />
             </div>
-          </div>
-
-          {/* 5. Tabela — o detalhe fica por último, depois de todo o resumo */}
-          <div className="card">
-            <div className="card__header" style={{ paddingBottom: 12 }}>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  className={aba === 'aberto' ? 'btn btn--primary' : 'btn btn--secondary'}
-                  onClick={() => setAba('aberto')}
-                >
-                  Abertos ({dados.chamados_abertos.length})
-                </button>
-                <button
-                  className={aba === 'em_andamento' ? 'btn btn--primary' : 'btn btn--secondary'}
-                  onClick={() => setAba('em_andamento')}
-                >
-                  Em andamento ({dados.chamados_em_andamento.length})
-                </button>
-              </div>
-              <button className="btn btn--secondary" onClick={() => navigate(`/chamados?status=${aba}`)}>Ver todos</button>
+            <div className="mini-stat">
+              <p className="mini-stat__label">Tempo médio de resolução</p>
+              <p className="mini-stat__value">{formatarDuracao(dados.tempo_medio_segundos)}</p>
+              <MiniDelta pct={dados.tempo_medio_delta_pct} invertido />
             </div>
-            <TabelaChamados
-              chamados={listaAtual}
-              vazio={aba === 'aberto' ? 'Nenhum chamado aberto no momento.' : 'Nenhum chamado em andamento no momento.'}
-              onAbrir={(id) => setChamadoAbertoId(id)}
-            />
+            <div className="mini-stat">
+              <p className="mini-stat__label">Abertos</p>
+              <p className="mini-stat__value">{dados.por_status.aberto?.total ?? 0}</p>
+              <p className="mini-stat__delta mini-stat__delta--neutral">
+                {dados.por_status.aberto?.sem_responsavel ?? 0} sem responsável
+              </p>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="right-column">
-          <div className="card">
-            <div className="card__header" style={{ paddingBottom: 12 }}>
-              <h3 className="card__title">Fila sem responsável</h3>
-            </div>
-            <div className="side-panel-list">
-              {dados.fila_sem_responsavel.length === 0 && (
-                <div className="empty-state" style={{ padding: '20px 0' }}>Nenhum chamado esperando responsável 🎉</div>
-              )}
-              {dados.fila_sem_responsavel.slice(0, 6).map((c) => (
-                <div
-                  key={c.id}
-                  className={`notification-item notification-item--sem-responsavel notification-item--prioridade-${c.prioridade_atual}`}
-                >
-                  <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setChamadoAbertoId(c.id)}>
-                    <p className="notification-item__title">#{c.id} — {c.titulo}</p>
-                    <p className="notification-item__desc">{c.setor_nome} · {c.categoria_nome}</p>
-                  </div>
-                  <button className="btn btn--secondary" style={{ flexShrink: 0 }} onClick={() => assumir(c.id)}>Assumir</button>
-                </div>
-              ))}
-            </div>
+      {/*
+        2ª faixa: Minha fila (o que exige ação minha agora) ao lado de Atividade
+        recente (contexto rápido do que está rolando) — ambas leituras curtas,
+        ficam bem lado a lado.
+      */}
+      <div className="dashboard-grid" style={{ marginBottom: 20, alignItems: 'stretch' }}>
+        <MinhaFilaCard minhaFila={dados.minha_fila} onAbrirChamado={(id) => setChamadoAbertoId(id)} />
+        <FeedAtividades atividades={dados.atividade_recente} />
+      </div>
+
+      {/* 3ª faixa: Últimos chamados ativos — visão operacional completa, sozinha na linha */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="card__header" style={{ paddingBottom: 12 }}>
+          <h3 className="card__title">Últimos chamados ativos</h3>
+          <button className="btn btn--secondary" onClick={() => navigate('/chamados')}>
+            Ver todos <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', marginLeft: 2 }} />
+          </button>
+        </div>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>ID</th><th>Título</th><th>Cliente</th>
+              <th>Prioridade</th><th>SLA</th><th>Atualizado em</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dados.chamados_ativos.length === 0 && (
+              <tr><td colSpan={6} className="empty-state">Nenhum chamado ativo no momento.</td></tr>
+            )}
+            {dados.chamados_ativos.map((c: ChamadoComSla) => (
+              <tr key={c.id} className="clickable" onClick={() => setChamadoAbertoId(c.id)}>
+                <td className={`td--prioridade-${c.prioridade_atual}`}>#{c.id}</td>
+                <td>{c.titulo}</td>
+                <td>{c.aberto_por_nome ?? '—'}</td>
+                <td><PrioridadeBadge prioridade={c.prioridade_atual} /></td>
+                <td><SlaCell segundos={c.sla_segundos_restantes} /></td>
+                <td>{formatarData(c.atualizado_em)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Faixa inferior full-width: tendência, categoria e agenda lado a lado */}
+      <div className="dashboard-bottom-row">
+        {/* Mini-gráfico "Chamados nos últimos N dias" */}
+        <div className="card">
+          <div className="mini-chart-header">
+            <h3 className="card__title">Chamados recentes</h3>
+            <select
+              className="mini-chart-select"
+              value={janelaGrafico}
+              onChange={(e) => setJanelaGrafico(Number(e.target.value) as 7 | 14)}
+            >
+              <option value={7}>7 dias</option>
+              <option value={14}>14 dias</option>
+            </select>
           </div>
-          <QuickActions />
+          <ResponsiveContainer width="100%" height={140}>
+            <LineChart data={serieGrafico}>
+              <XAxis
+                dataKey="dia"
+                tickFormatter={(d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                fontSize={11}
+                tick={{ fill: '#8891A6' }}
+                axisLine={{ stroke: '#212A3E' }}
+                tickLine={false}
+              />
+              <Tooltip
+                labelFormatter={(d) => new Date(d as string).toLocaleDateString('pt-BR')}
+                contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }}
+                labelStyle={{ color: '#8891A6' }}
+              />
+              <Line type="monotone" dataKey="total" name="Chamados" stroke="#3B82F6" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Chamados por categoria */}
+        <div className="card">
+          <div className="card__header" style={{ paddingBottom: 4 }}>
+            <h3 className="card__title">Chamados por categoria (mês)</h3>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <Pie data={dados.por_categoria} dataKey="total" nameKey="nome" innerRadius={45} outerRadius={68} cy="42%">
+                {dados.por_categoria.map((_, i) => (
+                  <Cell key={i} fill={CORES_CATEGORIA[i % CORES_CATEGORIA.length]} stroke="#10162A" />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }} />
+              <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ fontSize: 11, lineHeight: '16px', color: '#8891A6' }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Agenda de hoje — módulo ainda não implementado */}
+        <div className="card">
+          <div className="card__header" style={{ paddingBottom: 4 }}>
+            <h3 className="card__title">Agenda de hoje</h3>
+          </div>
+          <div className="agenda-placeholder">
+            <div className="agenda-placeholder__icon"><CalendarDays size={26} strokeWidth={1.75} /></div>
+            <p className="agenda-placeholder__texto">
+              O módulo de Agenda ainda não foi implementado.<br />Em breve: manutenções e eventos de TI aqui.
+            </p>
+          </div>
         </div>
       </div>
 

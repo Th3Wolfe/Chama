@@ -6,6 +6,7 @@ import { api } from '../api/client';
 import { POLLING_MS } from '../config/polling';
 import { pushToast } from '../components/Toast';
 import type { Equipamento, Usuario } from '../api/types';
+import { TriangleAlert, Pencil, Trash2 } from 'lucide-react';
 
 const STATUS_OPCOES = [
   { valor: 'ativo', label: 'Ativo' },
@@ -113,7 +114,7 @@ export function Equipamentos() {
         titulo: 'Não foi possível salvar',
         descricao: err?.response?.data?.erro || 'Tente novamente.',
         cor: '#EF4444',
-        icone: '⚠️',
+        icone: TriangleAlert,
       });
     } finally {
       setSalvando(false);
@@ -132,7 +133,7 @@ export function Equipamentos() {
         titulo: 'Não foi possível excluir',
         descricao: err?.response?.data?.erro || 'Tente novamente.',
         cor: '#EF4444',
-        icone: '⚠️',
+        icone: TriangleAlert,
       });
     } finally {
       setExcluindoCarregando(false);
@@ -171,7 +172,7 @@ export function Equipamentos() {
                         aria-label="Editar"
                         onClick={() => abrirEdicao(e)}
                       >
-                        ✏️
+                        <Pencil size={14} strokeWidth={2} />
                       </button>
                       <button
                         className="icon-btn icon-btn--danger"
@@ -179,7 +180,7 @@ export function Equipamentos() {
                         aria-label="Excluir"
                         onClick={() => setExcluindo(e)}
                       >
-                        🗑️
+                        <Trash2 size={14} strokeWidth={2} />
                       </button>
                     </div>
                   </td>

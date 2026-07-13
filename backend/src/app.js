@@ -7,8 +7,10 @@ const express = require('express');
 // no cliente. Precisa ser importado logo após o `express`, antes das rotas.
 require('express-async-errors');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const cors = require('cors');
 const passport = require('./passport-config');
+const pool = require('./db');
 
 const authRoutes = require('./routes/auth');
 const categoriasRoutes = require('./routes/categorias');
@@ -27,6 +29,12 @@ app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(
   session({
+    // Sessão persistida no Postgres em vez do MemoryStore padrão do
+    // express-session. O MemoryStore some inteira toda vez que o processo
+    // reinicia (deploy, crash, ou até o `node --watch` do modo dev) — isso
+    // desloga todo mundo de repente, mesmo com o cookie do navegador intacto.
+    // `createTableIfMissing` cria a tabela "session" sozinho no primeiro boot.
+    store: new pgSession({ pool, tableName: 'session', createTableIfMissing: true }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,

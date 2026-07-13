@@ -1,5 +1,24 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  FileText,
+  FolderTree,
+  Building2,
+  Wrench,
+  User,
+  Monitor,
+  Paperclip,
+  Printer,
+  Globe,
+  Laptop,
+  Puzzle,
+  RefreshCw,
+  Mail,
+} from 'lucide-react';
 import { AppLayout } from '../../components/Layout/AppLayout';
 import { StatusBadge, PrioridadeBadge } from '../../components/Badge';
 import { api, API_URL } from '../../api/client';
@@ -22,15 +41,15 @@ function formatarTamanho(bytes: number): string {
 // Ícone só decorativo pra dar contexto visual rápido ao tipo de problema —
 // não existe campo de ícone no banco, então inferimos por palavras-chave
 // no nome da categoria, com um fallback genérico.
-function iconeCategoria(nomeCategoria?: string): string {
+function iconeCategoria(nomeCategoria?: string): LucideIcon {
   const nome = (nomeCategoria || '').toLowerCase();
-  if (nome.includes('impressora')) return '🖨️';
-  if (nome.includes('internet') || nome.includes('rede') || nome.includes('wifi')) return '🌐';
-  if (nome.includes('hardware') || nome.includes('computador') || nome.includes('notebook') || nome.includes('máquina')) return '💻';
-  if (nome.includes('software') || nome.includes('sistema')) return '🧩';
-  if (nome.includes('reposi')) return '🔄';
-  if (nome.includes('e-mail') || nome.includes('email')) return '📧';
-  return '🗂️';
+  if (nome.includes('impressora')) return Printer;
+  if (nome.includes('internet') || nome.includes('rede') || nome.includes('wifi')) return Globe;
+  if (nome.includes('hardware') || nome.includes('computador') || nome.includes('notebook') || nome.includes('máquina')) return Laptop;
+  if (nome.includes('software') || nome.includes('sistema')) return Puzzle;
+  if (nome.includes('reposi')) return RefreshCw;
+  if (nome.includes('e-mail') || nome.includes('email')) return Mail;
+  return FolderTree;
 }
 
 export function ChamadoDetail() {
@@ -221,7 +240,7 @@ export function ChamadoDetail() {
   return (
     <AppLayout titulo="Chamado" subtitulo="Detalhes, conversa e histórico do chamado">
       <button className="btn btn--secondary" style={{ marginBottom: 16 }} onClick={() => navigate('/chamados')}>
-        ← Voltar
+        <ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Voltar
       </button>
 
       <div className="grid-2">
@@ -229,7 +248,9 @@ export function ChamadoDetail() {
           <div className="card chamado-header">
             <div className="chamado-header__top">
               <div className="chamado-header__id">
-                <span className="chamado-header__icon">{iconeCategoria(chamado.categoria_nome)}</span>
+                <span className="chamado-header__icon">
+                  {(() => { const Icone = iconeCategoria(chamado.categoria_nome); return <Icone size={20} strokeWidth={2} />; })()}
+                </span>
                 <div>
                   <div className="chamado-header__titulo">#{chamado.id} — {chamado.titulo}</div>
                   <div className="chamado-header__meta">
@@ -240,7 +261,7 @@ export function ChamadoDetail() {
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 {podeComentar && !editandoChamado && (
                   <button className="btn btn--secondary" disabled={salvando} onClick={iniciarEdicaoChamado}>
-                    ✏️ Editar
+                    <Pencil size={14} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Editar
                   </button>
                 )}
                 {souDono && chamado.status !== 'resolvido' && (
@@ -299,28 +320,28 @@ export function ChamadoDetail() {
               ) : (
                 <div className="chamado-detalhes-grid">
                   <div className="chamado-detalhes-item">
-                    <span className="chamado-detalhes-item__label">📝 Descrição</span>
+                    <span className="chamado-detalhes-item__label"><FileText size={13} strokeWidth={2} /> Descrição</span>
                     <p className="chamado-detalhes-item__valor">{chamado.descricao}</p>
                   </div>
                   <div className="chamado-detalhes-item">
-                    <span className="chamado-detalhes-item__label">🗂️ Categoria</span>
+                    <span className="chamado-detalhes-item__label"><FolderTree size={13} strokeWidth={2} /> Categoria</span>
                     <p className="chamado-detalhes-item__valor">{chamado.categoria_nome}</p>
                   </div>
                   <div className="chamado-detalhes-item">
-                    <span className="chamado-detalhes-item__label">🏢 Setor</span>
+                    <span className="chamado-detalhes-item__label"><Building2 size={13} strokeWidth={2} /> Setor</span>
                     <p className="chamado-detalhes-item__valor">{chamado.setor_nome}</p>
                   </div>
                   <div className="chamado-detalhes-item">
-                    <span className="chamado-detalhes-item__label">👤 Aberto por</span>
+                    <span className="chamado-detalhes-item__label"><User size={13} strokeWidth={2} /> Aberto por</span>
                     <p className="chamado-detalhes-item__valor">{chamado.aberto_por_nome}</p>
                   </div>
                   <div className="chamado-detalhes-item">
-                    <span className="chamado-detalhes-item__label">🛠️ Responsável</span>
+                    <span className="chamado-detalhes-item__label"><Wrench size={13} strokeWidth={2} /> Responsável</span>
                     <p className="chamado-detalhes-item__valor">{chamado.responsavel_nome ?? '—'}</p>
                   </div>
                   {chamado.equipamento_nome && (
                     <div className="chamado-detalhes-item">
-                      <span className="chamado-detalhes-item__label">🖥️ Equipamento</span>
+                      <span className="chamado-detalhes-item__label"><Monitor size={13} strokeWidth={2} /> Equipamento</span>
                       <p className="chamado-detalhes-item__valor">{chamado.equipamento_nome}</p>
                     </div>
                   )}
@@ -370,7 +391,8 @@ export function ChamadoDetail() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        📎 {a.nome_arquivo} <span className="text-muted">({formatarTamanho(a.tamanho_bytes)})</span>
+                        <Paperclip size={13} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+                        {a.nome_arquivo} <span className="text-muted">({formatarTamanho(a.tamanho_bytes)})</span>
                       </a>
                       {podeExcluir && (
                         <button
@@ -470,7 +492,7 @@ export function ChamadoDetail() {
 
             <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 16, paddingTop: 16 }}>
               <button className="btn btn--danger btn--block" disabled={salvando} onClick={handleExcluir}>
-                🗑️ Excluir chamado
+                <Trash2 size={14} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Excluir chamado
               </button>
             </div>
           </div>

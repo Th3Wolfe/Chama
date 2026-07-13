@@ -8,7 +8,7 @@ export function StatCard({
   value,
   footer,
 }: {
-  icon: string;
+  icon: ReactNode;
   iconBg: string;
   accent?: string;
   label: string;

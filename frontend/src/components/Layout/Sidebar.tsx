@@ -1,25 +1,39 @@
 import { NavLink } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  FolderTree,
+  Building2,
+  Monitor,
+  Users,
+  BarChart3,
+  BookOpen,
+  Plus,
+  Megaphone,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const LINKS_ADMIN = [
-  { to: '/', label: 'Dashboard', icon: '🏠', end: true },
-  { to: '/chamados', label: 'Chamados', icon: '📋' },
-  { to: '/categorias', label: 'Categorias', icon: '🗂️' },
-  { to: '/setores', label: 'Setores', icon: '🏢' },
-  { to: '/equipamentos', label: 'Equipamentos', icon: '🖥️' },
-  { to: '/usuarios', label: 'Usuários', icon: '👤' },
-  { to: '/relatorios', label: 'Relatórios', icon: '📊' },
+const LINKS_ADMIN: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/chamados', label: 'Chamados', icon: ClipboardList },
+  { to: '/categorias', label: 'Categorias', icon: FolderTree },
+  { to: '/setores', label: 'Setores', icon: Building2 },
+  { to: '/equipamentos', label: 'Equipamentos', icon: Monitor },
+  { to: '/usuarios', label: 'Usuários', icon: Users },
+  { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
+  { to: '/base-conhecimento', label: 'Base de conhecimento', icon: BookOpen },
 ];
 
-const LINKS_USUARIO = [
-  { to: '/', label: 'Meus chamados', icon: '📋', end: true },
-  { to: '/chamados/novo', label: 'Novo chamado', icon: '➕' },
-  { to: '/base-conhecimento', label: 'Base de conhecimento', icon: '📖' },
-  { to: '/comunicados', label: 'Comunicados', icon: '📣' },
+const LINKS_USUARIO: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
+  { to: '/', label: 'Meus chamados', icon: ClipboardList, end: true },
+  { to: '/chamados/novo', label: 'Novo chamado', icon: Plus },
+  { to: '/base-conhecimento', label: 'Base de conhecimento', icon: BookOpen },
+  { to: '/comunicados', label: 'Comunicados', icon: Megaphone },
 ];
 
 export function Sidebar() {
-  const { usuario, logout } = useAuth();
+  const { usuario } = useAuth();
   const isAdmin = usuario?.perfil === 'admin';
   const links = isAdmin ? LINKS_ADMIN : LINKS_USUARIO;
 
@@ -43,30 +57,13 @@ export function Sidebar() {
             end={link.end}
             className={({ isActive }) => `sidebar__link${isActive ? ' active' : ''}`}
           >
-            <span className="sidebar__link-icon">{link.icon}</span>
+            <span className="sidebar__link-icon">
+              <link.icon size={18} strokeWidth={2} />
+            </span>
             {link.label}
           </NavLink>
         ))}
       </nav>
-
-      {usuario && (
-        <div className="sidebar__footer">
-          <div className="sidebar__avatar">{usuario.nome.slice(0, 2).toUpperCase()}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sidebar__user-name">{usuario.nome}</div>
-            <div className="sidebar__user-email" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {usuario.email}
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            title="Sair"
-            style={{ background: 'none', border: 'none', color: '#8493AC', fontSize: 16 }}
-          >
-            ⏻
-          </button>
-        </div>
-      )}
     </aside>
   );
 }

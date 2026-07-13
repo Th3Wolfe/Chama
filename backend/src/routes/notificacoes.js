@@ -34,4 +34,13 @@ router.patch('/:id/lida', requireAuth, async (req, res) => {
   res.json(rows[0]);
 });
 
+// Marca todas as notificações do usuário logado como lidas de uma vez
+router.patch('/lidas', requireAuth, async (req, res) => {
+  await pool.query(
+    `UPDATE notificacoes SET lida = TRUE WHERE usuario_id = $1 AND lida = FALSE`,
+    [req.user.id]
+  );
+  res.json({ ok: true });
+});
+
 module.exports = router;

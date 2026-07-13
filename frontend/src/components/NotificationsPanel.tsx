@@ -1,3 +1,4 @@
+import { CheckCheck } from 'lucide-react';
 import type { Notificacao } from '../api/types';
 
 const TIPO_INFO: Record<Notificacao['tipo'], { titulo: string; cor: string }> = {
@@ -20,14 +21,24 @@ function tempoRelativo(iso: string): string {
 export function NotificationsPanel({
   notificacoes,
   onSelecionar,
+  onMarcarTodasLidas,
 }: {
   notificacoes: Notificacao[];
   onSelecionar?: (n: Notificacao) => void;
+  onMarcarTodasLidas?: () => void;
 }) {
+  const temNaoLidas = notificacoes.some((n) => !n.lida);
+
   return (
     <div className="card">
       <div className="card__header">
         <h3 className="card__title">Notificações</h3>
+        {temNaoLidas && (
+          <button className="notifications-panel__marcar-todas" onClick={onMarcarTodasLidas}>
+            <CheckCheck size={13} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+            Marcar todas como lidas
+          </button>
+        )}
       </div>
       <div className="side-panel-list">
         {notificacoes.length === 0 && (
@@ -45,7 +56,7 @@ export function NotificationsPanel({
               <span className="notification-item__dot" style={{ background: info.cor }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p className="notification-item__title">{info.titulo}</p>
-                <p className="notification-item__desc">Chamado #{n.chamado_id}</p>
+                <p className="notification-item__desc">{n.chamado_titulo ?? `Chamado #${n.chamado_id}`}</p>
               </div>
               <span className="notification-item__time">{tempoRelativo(n.criado_em)}</span>
             </div>

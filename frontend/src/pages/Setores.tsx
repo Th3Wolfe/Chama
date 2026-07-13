@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { POLLING_MS } from '../config/polling';
 import { pushToast } from '../components/Toast';
 import type { Setor } from '../api/types';
+import { TriangleAlert } from 'lucide-react';
 
 export function Setores() {
   const [setores, setSetores] = useState<Setor[]>([]);
@@ -62,7 +63,7 @@ export function Setores() {
         titulo: 'Não foi possível salvar',
         descricao: err?.response?.data?.erro || 'Tente novamente.',
         cor: '#EF4444',
-        icone: '⚠️',
+        icone: TriangleAlert,
       });
     } finally {
       setSalvando(false);
@@ -80,7 +81,7 @@ export function Setores() {
         titulo: 'Não foi possível excluir',
         descricao: err?.response?.data?.erro || 'Tente novamente.',
         cor: '#EF4444',
-        icone: '⚠️',
+        icone: TriangleAlert,
       });
     }
   }

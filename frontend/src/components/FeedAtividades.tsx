@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react';
+import { Plus, MessageSquare, RefreshCw } from 'lucide-react';
 import type { AtividadeRecente } from '../api/types';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -6,10 +8,10 @@ const STATUS_LABEL: Record<string, string> = {
   resolvido: 'Resolvido',
 };
 
-const ICONE_POR_TIPO: Record<AtividadeRecente['tipo'], string> = {
-  novo_chamado: '➕',
-  comentario: '💬',
-  mudanca_status: '🔄',
+const ICONE_POR_TIPO: Record<AtividadeRecente['tipo'], LucideIcon> = {
+  novo_chamado: Plus,
+  comentario: MessageSquare,
+  mudanca_status: RefreshCw,
 };
 
 function formatarRelativo(iso: string): string {
@@ -26,11 +28,11 @@ function formatarRelativo(iso: string): string {
 function textoAtividade(a: AtividadeRecente): string {
   switch (a.tipo) {
     case 'novo_chamado':
-      return `abriu o chamado #${a.chamado_id} — ${a.chamado_titulo}`;
+      return `abriu o chamado "${a.chamado_titulo}"`;
     case 'comentario':
-      return `comentou em #${a.chamado_id}: "${a.detalhe}"`;
+      return `comentou em "${a.chamado_titulo}": "${a.detalhe}"`;
     case 'mudanca_status':
-      return `alterou #${a.chamado_id} para ${STATUS_LABEL[a.detalhe ?? ''] ?? a.detalhe}`;
+      return `alterou "${a.chamado_titulo}" para ${STATUS_LABEL[a.detalhe ?? ''] ?? a.detalhe}`;
     default:
       return '';
   }
@@ -46,17 +48,20 @@ export function FeedAtividades({ atividades }: { atividades: AtividadeRecente[] 
         {atividades.length === 0 && (
           <div className="empty-state" style={{ padding: '20px 0' }}>Nenhuma atividade recente.</div>
         )}
-        {atividades.map((a, i) => (
-          <div key={`${a.tipo}-${a.chamado_id}-${a.quando}-${i}`} className="feed-atividades__item">
-            <span className="feed-atividades__icon">{ICONE_POR_TIPO[a.tipo]}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p className="feed-atividades__texto">
-                <strong>{a.autor_nome}</strong> {textoAtividade(a)}
-              </p>
-              <p className="feed-atividades__tempo">{formatarRelativo(a.quando)}</p>
+        {atividades.map((a, i) => {
+          const Icone = ICONE_POR_TIPO[a.tipo];
+          return (
+            <div key={`${a.tipo}-${a.chamado_id}-${a.quando}-${i}`} className="feed-atividades__item">
+              <span className="feed-atividades__icon"><Icone size={15} strokeWidth={2} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="feed-atividades__texto">
+                  <strong>{a.autor_nome}</strong> {textoAtividade(a)}
+                </p>
+                <p className="feed-atividades__tempo">{formatarRelativo(a.quando)}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

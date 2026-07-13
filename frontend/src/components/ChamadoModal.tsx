@@ -1,5 +1,28 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
+import {
+  Pencil,
+  Check,
+  ChevronDown,
+  Trash2,
+  X,
+  FileText,
+  FolderTree,
+  Target,
+  Building2,
+  Wrench,
+  User,
+  Monitor,
+  CheckCircle2,
+  ExternalLink,
+  Printer,
+  Globe,
+  Laptop,
+  Puzzle,
+  RefreshCw,
+  Mail,
+} from 'lucide-react';
 import { StatusBadge, PrioridadeBadge } from './Badge';
 import { api, API_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -26,15 +49,15 @@ function formatarTamanho(bytes: number): string {
 }
 
 // Ícone só decorativo, mesmo critério usado na página de detalhe do chamado.
-function iconeCategoria(nomeCategoria?: string): string {
+function iconeCategoria(nomeCategoria?: string): LucideIcon {
   const nome = (nomeCategoria || '').toLowerCase();
-  if (nome.includes('impressora')) return '🖨️';
-  if (nome.includes('internet') || nome.includes('rede') || nome.includes('wifi')) return '🌐';
-  if (nome.includes('hardware') || nome.includes('computador') || nome.includes('notebook') || nome.includes('máquina')) return '💻';
-  if (nome.includes('software') || nome.includes('sistema')) return '🧩';
-  if (nome.includes('reposi')) return '🔄';
-  if (nome.includes('e-mail') || nome.includes('email')) return '📧';
-  return '🗂️';
+  if (nome.includes('impressora')) return Printer;
+  if (nome.includes('internet') || nome.includes('rede') || nome.includes('wifi')) return Globe;
+  if (nome.includes('hardware') || nome.includes('computador') || nome.includes('notebook') || nome.includes('máquina')) return Laptop;
+  if (nome.includes('software') || nome.includes('sistema')) return Puzzle;
+  if (nome.includes('reposi')) return RefreshCw;
+  if (nome.includes('e-mail') || nome.includes('email')) return Mail;
+  return FolderTree;
 }
 
 interface ChamadoModalProps {
@@ -259,7 +282,9 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
           <>
             <div className="chamado-modal__topbar">
               <div className="chamado-header__id">
-                <span className="chamado-header__icon">{iconeCategoria(chamado.categoria_nome)}</span>
+                <span className="chamado-header__icon">
+                  {(() => { const Icone = iconeCategoria(chamado.categoria_nome); return <Icone size={20} strokeWidth={2} />; })()}
+                </span>
                 <div>
                   <div className="chamado-header__titulo">
                     #{chamado.id} {chamado.titulo}{' '}
@@ -276,18 +301,18 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
               <div className="chamado-modal__actions">
                 {(isAdmin || chamado.aberto_por === usuario?.id) && !editandoChamado && (
                   <button className="btn btn--secondary" disabled={salvando} onClick={iniciarEdicaoChamado}>
-                    ✏️ Editar
+                    <Pencil size={14} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Editar
                   </button>
                 )}
                 {chamado.aberto_por === usuario?.id && chamado.status !== 'resolvido' && (
                   <button className="btn btn--primary" disabled={salvando} onClick={handleResolver}>
-                    ✓ Resolver
+                    <Check size={14} strokeWidth={2.5} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Resolver
                   </button>
                 )}
                 {isAdmin && (
                   <div className="dropdown" ref={menuAcoesRef}>
                     <button className="btn btn--secondary" onClick={() => setMenuAcoesAberto((v) => !v)}>
-                      Mais ações ▾
+                      Mais ações <ChevronDown size={14} strokeWidth={2} style={{ verticalAlign: '-2px' }} />
                     </button>
                     {menuAcoesAberto && (
                       <div className="dropdown__menu">
@@ -335,14 +360,14 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
                         </div>
                         <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
                           <button className="btn btn--danger btn--block" disabled={salvando} onClick={handleExcluir}>
-                            🗑️ Excluir chamado
+                            <Trash2 size={14} strokeWidth={2} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Excluir chamado
                           </button>
                         </div>
                       </div>
                     )}
                   </div>
                 )}
-                <button className="modal__close" onClick={onFechar} aria-label="Fechar">✕</button>
+                <button className="modal__close" onClick={onFechar} aria-label="Fechar"><X size={16} /></button>
               </div>
             </div>
 
@@ -406,38 +431,38 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
                   ) : (
                     <div className="chamado-detalhes-grid">
                       <div className="chamado-detalhes-item">
-                        <span className="chamado-detalhes-item__label">📝 Descrição</span>
+                        <span className="chamado-detalhes-item__label"><FileText size={13} strokeWidth={2} /> Descrição</span>
                         <p className="chamado-detalhes-item__valor">{chamado.descricao}</p>
                       </div>
                       <div className="chamado-detalhes-item">
-                        <span className="chamado-detalhes-item__label">🗂️ Categoria</span>
+                        <span className="chamado-detalhes-item__label"><FolderTree size={13} strokeWidth={2} /> Categoria</span>
                         <p className="chamado-detalhes-item__valor">{chamado.categoria_nome}</p>
                       </div>
                       <div className="chamado-detalhes-item">
-                        <span className="chamado-detalhes-item__label">🎯 Prioridade</span>
+                        <span className="chamado-detalhes-item__label"><Target size={13} strokeWidth={2} /> Prioridade</span>
                         <p className="chamado-detalhes-item__valor"><PrioridadeBadge prioridade={chamado.prioridade_atual} /></p>
                       </div>
                       <div className="chamado-detalhes-item">
-                        <span className="chamado-detalhes-item__label">🏢 Setor</span>
+                        <span className="chamado-detalhes-item__label"><Building2 size={13} strokeWidth={2} /> Setor</span>
                         <p className="chamado-detalhes-item__valor">{chamado.setor_nome}</p>
                       </div>
                       <div className="chamado-detalhes-item">
-                        <span className="chamado-detalhes-item__label">🛠️ Responsável</span>
+                        <span className="chamado-detalhes-item__label"><Wrench size={13} strokeWidth={2} /> Responsável</span>
                         <p className="chamado-detalhes-item__valor">{chamado.responsavel_nome ?? '—'}</p>
                       </div>
                       <div className="chamado-detalhes-item">
-                        <span className="chamado-detalhes-item__label">👤 Aberto por</span>
+                        <span className="chamado-detalhes-item__label"><User size={13} strokeWidth={2} /> Aberto por</span>
                         <p className="chamado-detalhes-item__valor">{chamado.aberto_por_nome}</p>
                       </div>
                       {chamado.equipamento_nome && (
                         <div className="chamado-detalhes-item">
-                          <span className="chamado-detalhes-item__label">🖥️ Equipamento</span>
+                          <span className="chamado-detalhes-item__label"><Monitor size={13} strokeWidth={2} /> Equipamento</span>
                           <p className="chamado-detalhes-item__valor">{chamado.equipamento_nome}</p>
                         </div>
                       )}
                       {chamado.status === 'resolvido' && (
                         <div className="chamado-detalhes-item">
-                          <span className="chamado-detalhes-item__label">✅ Resolvido em</span>
+                          <span className="chamado-detalhes-item__label"><CheckCircle2 size={13} strokeWidth={2} /> Resolvido em</span>
                           <p className="chamado-detalhes-item__valor">{chamado.resolvido_em ? formatarDataHora(chamado.resolvido_em) : '—'}</p>
                         </div>
                       )}
@@ -500,7 +525,7 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
                               </button>
                             ) : (
                               <a className="anexo-thumb anexo-thumb--arquivo" href={url} target="_blank" rel="noreferrer">
-                                📄
+                                <FileText size={22} strokeWidth={1.75} />
                               </a>
                             )}
                             <div className="anexo-card__info">
@@ -511,7 +536,7 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
                             </div>
                             {podeExcluir && (
                               <button className="anexo-card__excluir" onClick={() => handleExcluirAnexo(a.id)} aria-label="Excluir anexo">
-                                ✕
+                                <X size={13} strokeWidth={2.5} />
                               </button>
                             )}
                           </div>
@@ -552,7 +577,9 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
             </div>
 
             <div className="chamado-modal__footer">
-              <button className="btn btn--secondary" onClick={abrirPaginaCompleta}>Abrir página completa ↗</button>
+              <button className="btn btn--secondary" onClick={abrirPaginaCompleta}>
+                Abrir página completa <ExternalLink size={14} strokeWidth={2} style={{ verticalAlign: '-2px', marginLeft: 2 }} />
+              </button>
               <button className="btn btn--primary" onClick={onFechar}>Fechar</button>
             </div>
           </>
@@ -569,7 +596,7 @@ export function ChamadoModal({ chamadoId, onFechar, onMudou }: ChamadoModalProps
               <span className="lightbox__nome">{imagemAmpliada.nome}</span>
               <div style={{ display: 'flex', gap: 8 }}>
                 <a className="btn btn--secondary" href={imagemAmpliada.url} target="_blank" rel="noreferrer">Baixar</a>
-                <button className="modal__close" onClick={() => setImagemAmpliada(null)} aria-label="Fechar imagem">✕</button>
+                <button className="modal__close" onClick={() => setImagemAmpliada(null)} aria-label="Fechar imagem"><X size={16} /></button>
               </div>
             </div>
             <img className="lightbox__img" src={imagemAmpliada.url} alt={imagemAmpliada.nome} />

@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { POLLING_MS } from '../config/polling';
 import { pushToast } from '../components/Toast';
 import type { Usuario } from '../api/types';
+import { TriangleAlert, Pencil, Power, Trash2 } from 'lucide-react';
 
 export function Usuarios() {
   const { usuario: eu } = useAuth();
@@ -48,7 +49,7 @@ export function Usuarios() {
         titulo: 'Não foi possível alterar o perfil',
         descricao: err?.response?.data?.erro || 'Tente novamente.',
         cor: '#EF4444',
-        icone: '⚠️',
+        icone: TriangleAlert,
       });
     } finally {
       setSalvandoId(null);
@@ -78,7 +79,7 @@ export function Usuarios() {
         titulo: 'Não foi possível salvar',
         descricao: err?.response?.data?.erro || 'Tente novamente.',
         cor: '#EF4444',
-        icone: '⚠️',
+        icone: TriangleAlert,
       });
     } finally {
       setSalvandoId(null);
@@ -102,7 +103,7 @@ export function Usuarios() {
         titulo: tipo === 'excluir' ? 'Não foi possível excluir' : 'Não foi possível alterar o status',
         descricao: err?.response?.data?.erro || 'Tente novamente.',
         cor: '#EF4444',
-        icone: '⚠️',
+        icone: TriangleAlert,
       });
       setAcaoPendente(null);
     } finally {
@@ -154,7 +155,7 @@ export function Usuarios() {
                         disabled={salvandoId === u.id}
                         onClick={() => abrirEdicao(u)}
                       >
-                        ✏️
+                        <Pencil size={14} strokeWidth={2} />
                       </button>
                       <button
                         className={`icon-btn icon-btn--toggle ${u.ativo ? 'icon-btn--toggle-on' : ''}`}
@@ -163,7 +164,7 @@ export function Usuarios() {
                         disabled={souEu || salvandoId === u.id}
                         onClick={() => setAcaoPendente({ tipo: 'ativo', usuario: u })}
                       >
-                        ⏻
+                        <Power size={14} strokeWidth={2} />
                       </button>
                       <button
                         className="icon-btn icon-btn--danger"
@@ -172,7 +173,7 @@ export function Usuarios() {
                         disabled={souEu || salvandoId === u.id}
                         onClick={() => setAcaoPendente({ tipo: 'excluir', usuario: u })}
                       >
-                        🗑️
+                        <Trash2 size={14} strokeWidth={2} />
                       </button>
                     </div>
                   </td>

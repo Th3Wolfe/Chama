@@ -3,16 +3,18 @@ const pool = require('../db');
 const { requireAdmin } = require('../middleware');
 const router = express.Router();
 
-// SLA por prioridade: ainda não existe configuração de SLA no banco (schema.sql
-// não tem essa tabela), então usamos um prazo fixo por prioridade como regra de
-// negócio provisória. Se/quando existir uma tabela de SLA por categoria, trocar
-// esse CASE por um JOIN nela.
+// SLA por prioridade: ainda não existe configuração de SLA no banco (confirmado
+// via \d chamados / \d historico_status: não há tabela de SLA, só os enums
+// prioridade_nivel e status_chamado), então usamos um prazo fixo por prioridade
+// como regra de negócio provisória. Se/quando existir uma tabela de SLA por
+// categoria, trocar esse CASE por um JOIN nela.
 const SLA_INTERVALO = `CASE c.prioridade_atual
   WHEN 'alta' THEN INTERVAL '4 hours'
   WHEN 'media' THEN INTERVAL '24 hours'
   ELSE INTERVAL '72 hours'
 END`;
 
+// Usado nas listas "prioridade agora" e "minha fila": sem o solicitante (aberto_por).
 const SELECT_CHAMADO_COM_SLA = `
   SELECT
     c.*, cat.nome AS categoria_nome, s.nome AS setor_nome, r.nome AS responsavel_nome,
@@ -23,6 +25,20 @@ const SELECT_CHAMADO_COM_SLA = `
   LEFT JOIN usuarios r ON r.id = c.responsavel_id
 `;
 
+// Usado na tabela "Últimos chamados ativos": inclui o nome de quem abriu
+// (coluna "Cliente" no protótipo).
+const SELECT_CHAMADO_ATIVO = `
+  SELECT
+    c.*, cat.nome AS categoria_nome, s.nome AS setor_nome, r.nome AS responsavel_nome,
+    ab.nome AS aberto_por_nome,
+    EXTRACT(EPOCH FROM ((c.criado_em + ${SLA_INTERVALO}) - now()))::int AS sla_segundos_restantes
+  FROM chamados c
+  JOIN categorias cat ON cat.id = c.categoria_id
+  JOIN setores s ON s.id = c.setor_id
+  JOIN usuarios ab ON ab.id = c.aberto_por
+  LEFT JOIN usuarios r ON r.id = c.responsavel_id
+`;
+
 router.get('/', requireAdmin, async (req, res) => {
   const meuId = req.user.id;
 
@@ -30,12 +46,11 @@ router.get('/', requireAdmin, async (req, res) => {
     contagens,
     tempoMedio,
     filaSemResponsavel,
-    listaAbertos,
-    listaAndamento,
+    chamadosAtivos,
     resolvidosHoje,
     resolvidosOntem,
     porCategoria,
-    serieDiaria,
+    serieSeteDias,
     prioridadeAgora,
     minhaFilaAguardando,
     minhaFilaClienteRespondeu,
@@ -50,26 +65,19 @@ router.get('/', requireAdmin, async (req, res) => {
       FROM chamados WHERE resolvido_em IS NOT NULL
     `),
     // Fila global de chamados sem responsável: qualquer um pode assumir.
+    // Também reaproveitada dentro de "minha_fila.sem_responsavel".
     pool.query(`
       ${SELECT_CHAMADO_COM_SLA}
       WHERE c.responsavel_id IS NULL AND c.status <> 'resolvido'
       ORDER BY c.criado_em ASC
     `),
+    // "Últimos chamados ativos": lista única (sem abas), mais recente primeiro,
+    // igual ao protótipo — colunas Cliente/Prioridade/SLA/Atualizado em.
     pool.query(`
-      SELECT c.*, cat.nome AS categoria_nome, s.nome AS setor_nome, r.nome AS responsavel_nome FROM chamados c
-      JOIN categorias cat ON cat.id = c.categoria_id
-      JOIN setores s ON s.id = c.setor_id
-      LEFT JOIN usuarios r ON r.id = c.responsavel_id
-      WHERE c.status = 'aberto'
-      ORDER BY c.criado_em DESC
-    `),
-    pool.query(`
-      SELECT c.*, cat.nome AS categoria_nome, s.nome AS setor_nome, r.nome AS responsavel_nome FROM chamados c
-      JOIN categorias cat ON cat.id = c.categoria_id
-      JOIN setores s ON s.id = c.setor_id
-      LEFT JOIN usuarios r ON r.id = c.responsavel_id
-      WHERE c.status = 'em_andamento'
-      ORDER BY c.criado_em DESC
+      ${SELECT_CHAMADO_ATIVO}
+      WHERE c.status <> 'resolvido'
+      ORDER BY c.atualizado_em DESC
+      LIMIT 10
     `),
     pool.query(`
       SELECT COUNT(*)::int AS total FROM chamados
@@ -85,14 +93,14 @@ router.get('/', requireAdmin, async (req, res) => {
       WHERE date_trunc('month', c.criado_em) = date_trunc('month', CURRENT_DATE)
       GROUP BY cat.nome ORDER BY total DESC
     `),
+    // Chamados criados por dia, últimos 7 dias — alimenta o mini-gráfico
+    // "Chamados nos últimos 7 dias" da coluna direita.
     pool.query(`
       SELECT
         dia::date AS dia,
-        COUNT(*) FILTER (WHERE c.status = 'aberto' AND c.criado_em::date <= dia)::int AS abertos,
-        COUNT(*) FILTER (WHERE c.status = 'em_andamento' AND c.criado_em::date <= dia)::int AS em_andamento,
-        COUNT(*) FILTER (WHERE c.status = 'resolvido' AND c.resolvido_em::date = dia)::int AS resolvidos
-      FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, INTERVAL '1 day') AS dia
-      LEFT JOIN chamados c ON c.criado_em::date <= dia
+        COUNT(c.id) FILTER (WHERE c.criado_em::date = dia)::int AS total
+      FROM generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, INTERVAL '1 day') AS dia
+      LEFT JOIN chamados c ON c.criado_em::date = dia
       GROUP BY dia ORDER BY dia
     `),
     // "Prioridade agora": o chamado que mais precisa de atenção neste instante.
@@ -208,10 +216,9 @@ router.get('/', requireAdmin, async (req, res) => {
     sla_dentro_prazo_pct: slaPctHoje,
     sla_dentro_prazo_delta_pct: slaPctHoje !== null && slaPctOntem !== null ? slaPctHoje - slaPctOntem : null,
     fila_sem_responsavel: filaSemResponsavel.rows,
-    chamados_abertos: listaAbertos.rows,
-    chamados_em_andamento: listaAndamento.rows,
+    chamados_ativos: chamadosAtivos.rows,
     por_categoria: porCategoria.rows,
-    serie_diaria: serieDiaria.rows,
+    serie_sete_dias: serieSeteDias.rows,
     prioridade_agora: prioridadeAgora.rows[0] ?? null,
     minha_fila: {
       aguardando_meu_atendimento: minhaFilaAguardando.rows,

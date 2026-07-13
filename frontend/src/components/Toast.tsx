@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { X, type LucideIcon } from 'lucide-react';
 
 export interface ToastItem {
   id: string;
   titulo: string;
   descricao: string;
   cor: string;
-  icone?: string;
+  icone?: LucideIcon;
   onClick?: () => void;
 }
 
@@ -41,14 +42,16 @@ export function ToastHost() {
         <div key={t.id} className="toast" style={{ borderLeftColor: t.cor }}>
           {t.icone && (
             <div className="toast__icone" style={{ background: `${t.cor}1A`, color: t.cor }}>
-              {t.icone}
+              <t.icone size={16} strokeWidth={2.25} />
             </div>
           )}
           <div style={{ flex: 1, cursor: t.onClick ? 'pointer' : 'default' }} onClick={t.onClick}>
             <p className="toast__title">{t.titulo}</p>
             <p className="toast__desc">{t.descricao}</p>
           </div>
-          <button className="toast__close" onClick={() => remover(t.id)} aria-label="Fechar aviso">✕</button>
+          <button className="toast__close" onClick={() => remover(t.id)} aria-label="Fechar aviso">
+            <X size={14} />
+          </button>
         </div>
       ))}
     </div>

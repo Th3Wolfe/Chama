@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus, FileText, CalendarCheck, Clock3, CheckCircle2, BookOpen, Megaphone } from 'lucide-react';
 import { AppLayout } from '../components/Layout/AppLayout';
 import { StatCard } from '../components/StatCard';
 import { StatusBadge, PrioridadeBadge } from '../components/Badge';
@@ -75,15 +76,15 @@ export function UserHome() {
       <div className="flex-between" style={{ marginBottom: 20 }}>
         <div />
         <button className="btn btn--primary" onClick={() => navigate('/chamados/novo')}>
-          + Novo chamado
+          <Plus size={15} strokeWidth={2.25} style={{ verticalAlign: '-3px', marginRight: 4 }} /> Novo chamado
         </button>
       </div>
 
       <div className="stat-grid">
-        <StatCard icon="📄" iconBg="var(--accent-blue)" accent="var(--accent-blue)" label="Total de chamados" value={total} />
-        <StatCard icon="📅" iconBg="var(--accent-blue)" accent="var(--accent-blue)" label="Abertos" value={abertos} />
-        <StatCard icon="🗓️" iconBg="var(--accent-amber)" accent="var(--accent-amber)" label="Em andamento" value={emAndamento} />
-        <StatCard icon="✅" iconBg="var(--accent-green)" accent="var(--accent-green)" label="Resolvidos" value={resolvidos} />
+        <StatCard icon={<FileText size={20} strokeWidth={2} />} iconBg="var(--accent-blue)" accent="var(--accent-blue)" label="Total de chamados" value={total} />
+        <StatCard icon={<CalendarCheck size={20} strokeWidth={2} />} iconBg="var(--accent-blue)" accent="var(--accent-blue)" label="Abertos" value={abertos} />
+        <StatCard icon={<Clock3 size={20} strokeWidth={2} />} iconBg="var(--accent-amber)" accent="var(--accent-amber)" label="Em andamento" value={emAndamento} />
+        <StatCard icon={<CheckCircle2 size={20} strokeWidth={2} />} iconBg="var(--accent-green)" accent="var(--accent-green)" label="Resolvidos" value={resolvidos} />
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
@@ -148,7 +149,7 @@ export function UserHome() {
             <p className="userhome-card__desc">Encontre respostas rápidas para problemas comuns.</p>
           </div>
           <div className="userhome-card__footer">
-            <span className="userhome-card__icon userhome-card__icon--blue">📖</span>
+            <span className="userhome-card__icon userhome-card__icon--blue"><BookOpen size={20} strokeWidth={2} /></span>
             <button className="btn btn--secondary" onClick={() => navigate('/base-conhecimento')}>Acessar</button>
           </div>
         </div>
@@ -159,7 +160,7 @@ export function UserHome() {
             <p className="userhome-card__desc">Fique por dentro das novidades e manutenções programadas.</p>
           </div>
           <div className="userhome-card__footer">
-            <span className="userhome-card__icon userhome-card__icon--purple">📣</span>
+            <span className="userhome-card__icon userhome-card__icon--purple"><Megaphone size={20} strokeWidth={2} /></span>
             <button className="btn btn--secondary" onClick={() => navigate('/comunicados')}>Ver comunicados</button>
           </div>
         </div>
@@ -167,10 +168,10 @@ export function UserHome() {
         <div className="card userhome-card">
           <div>
             <h3 className="userhome-card__title">Horário de atendimento</h3>
-            <p className="userhome-card__desc">Segunda a Sexta<br />12:00 – 18:00</p>
+            <p className="userhome-card__desc">Segunda a Sexta<br />08:00 – 18:00</p>
           </div>
           <div className="userhome-card__footer">
-            <span className="userhome-card__icon userhome-card__icon--green">🕐</span>
+            <span className="userhome-card__icon userhome-card__icon--green"><Clock3 size={20} strokeWidth={2} /></span>
             <span className="badge badge--ativo">● Atendimento online</span>
           </div>
         </div>

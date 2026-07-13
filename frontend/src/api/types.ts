@@ -146,10 +146,9 @@ export interface DashboardData {
   sla_dentro_prazo_pct: number | null;
   sla_dentro_prazo_delta_pct: number | null;
   fila_sem_responsavel: Chamado[];
-  chamados_abertos: Chamado[];
-  chamados_em_andamento: Chamado[];
+  chamados_ativos: ChamadoComSla[];
   por_categoria: { nome: string; total: number }[];
-  serie_diaria: { dia: string; abertos: number; em_andamento: number; resolvidos: number }[];
+  serie_sete_dias: { dia: string; total: number }[];
   prioridade_agora: ChamadoComSla | null;
   minha_fila: MinhaFila;
   atividade_recente: AtividadeRecente[];
