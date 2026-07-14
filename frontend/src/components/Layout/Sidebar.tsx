@@ -9,7 +9,6 @@ import {
   Users,
   BarChart3,
   BookOpen,
-  Plus,
   Megaphone,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -27,7 +26,6 @@ const LINKS_ADMIN: { to: string; label: string; icon: LucideIcon; end?: boolean 
 
 const LINKS_USUARIO: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
   { to: '/', label: 'Meus chamados', icon: ClipboardList, end: true },
-  { to: '/chamados/novo', label: 'Novo chamado', icon: Plus },
   { to: '/base-conhecimento', label: 'Base de conhecimento', icon: BookOpen },
   { to: '/comunicados', label: 'Comunicados', icon: Megaphone },
 ];

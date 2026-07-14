@@ -31,12 +31,48 @@ export interface Categoria {
   descricao: string | null;
   prioridade_padrao: Prioridade;
   ativa: boolean;
+  icone?: string;
+  atualizado_em?: string;
+  chamados_vinculados?: number;
+}
+
+export interface CategoriasStats {
+  total: number;
+  ativas: number;
+  chamados_vinculados: number;
+}
+
+export interface CategoriasPaginadas {
+  dados: Categoria[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_paginas: number;
+  stats: CategoriasStats;
 }
 
 export interface Setor {
   id: number;
   nome: string;
   ativo: boolean;
+  icone?: string;
+  atualizado_em?: string;
+  chamados_vinculados?: number;
+}
+
+export interface SetoresStats {
+  total: number;
+  ativos: number;
+  chamados_vinculados: number;
+}
+
+export interface SetoresPaginados {
+  dados: Setor[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_paginas: number;
+  stats: SetoresStats;
 }
 
 export interface Chamado {
@@ -152,4 +188,13 @@ export interface DashboardData {
   prioridade_agora: ChamadoComSla | null;
   minha_fila: MinhaFila;
   atividade_recente: AtividadeRecente[];
+  total_chamados: number;
+  total_chamados_delta_pct: number | null;
+  em_andamento_delta_pct: number | null;
+  aguardando_cliente_total: number;
+  taxa_resolucao_pct: number | null;
+  alertas_sla: { critico: number; alto: number; medio: number };
+  por_setor: { nome: string; total: number }[];
+  serie_resolvidos_sete_dias: { dia: string; total: number }[];
+  por_equipamento: { nome: string; marca: string | null; total: number }[];
 }

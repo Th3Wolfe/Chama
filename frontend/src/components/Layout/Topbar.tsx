@@ -21,6 +21,7 @@ const TIPO_INFO: Record<Notificacao['tipo'], { titulo: string; cor: string; icon
 
 export function Topbar({ titulo, subtitulo }: { titulo: string; subtitulo?: string }) {
   const { usuario, logout } = useAuth();
+  const isAdmin = usuario?.perfil === 'admin';
   const navigate = useNavigate();
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [aberto, setAberto] = useState(false);
@@ -104,7 +105,9 @@ export function Topbar({ titulo, subtitulo }: { titulo: string; subtitulo?: stri
             const info = TIPO_INFO[n.tipo];
             pushToast({
               titulo: info.titulo,
-              descricao: n.chamado_titulo ? `#${n.chamado_id} — ${n.chamado_titulo}` : `Chamado #${n.chamado_id}`,
+              descricao: n.chamado_titulo
+                ? (isAdmin ? `#${n.chamado_id} — ${n.chamado_titulo}` : n.chamado_titulo)
+                : (isAdmin ? `Chamado #${n.chamado_id}` : 'Chamado'),
               cor: info.cor,
               icone: info.icone,
               onClick: () => {
@@ -220,7 +223,7 @@ export function Topbar({ titulo, subtitulo }: { titulo: string; subtitulo?: stri
                   <span className="search-dropdown__label">Chamados</span>
                   {resultadoBusca.chamados.map((c) => (
                     <button key={c.id} className="search-dropdown__item" onClick={() => irPara(`/chamados/${c.id}`)}>
-                      #{c.id} — {c.titulo}
+                      {isAdmin ? `#${c.id} — ${c.titulo}` : c.titulo}
                     </button>
                   ))}
                 </div>

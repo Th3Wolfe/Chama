@@ -106,7 +106,7 @@ export function Login() {
           </h1>
           <p className="login-hero__subtitle">
             Abra chamados, acompanhe o andamento e encontre soluções com a
-            equipe de TI da Câmara Municipal de Itajubá.
+            equipe de TI.
           </p>
           <div className="login-hero__features">
             <div className="login-feature">

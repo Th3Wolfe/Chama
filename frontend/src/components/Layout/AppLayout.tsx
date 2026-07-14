@@ -18,7 +18,9 @@ export function AppLayout({
       <Sidebar />
       <div className="content-area">
         <Topbar titulo={titulo} subtitulo={subtitulo} />
-        <div className="page">{children}</div>
+        <div className="page">
+          <div className="page__inner">{children}</div>
+        </div>
       </div>
     </div>
   );

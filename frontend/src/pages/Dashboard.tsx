@@ -1,72 +1,33 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from 'recharts';
-import { ArrowUp, ArrowDown, ArrowRight, CalendarDays } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
+import { Ticket, Clock3, MessageCircleMore, CheckCircle2 } from 'lucide-react';
 import { AppLayout } from '../components/Layout/AppLayout';
-import { PrioridadeBadge } from '../components/Badge';
 import { ChamadoModal } from '../components/ChamadoModal';
-import { HeroPrioridadeAgora } from '../components/HeroPrioridadeAgora';
-import { MinhaFilaCard } from '../components/MinhaFilaCard';
+import { FilaAtendimento } from '../components/FilaAtendimento';
+import { AlertasSla } from '../components/AlertasSla';
+import { DesempenhoTime } from '../components/DesempenhoTime';
+import { ChamadosPorSetor } from '../components/ChamadosPorSetor';
+import { ChamadosPorCategoria } from '../components/ChamadosPorCategoria';
+import { ChamadosPorEquipamento } from '../components/ChamadosPorEquipamento';
 import { FeedAtividades } from '../components/FeedAtividades';
+import { StatCard } from '../components/StatCard';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { POLLING_MS } from '../config/polling';
-import { formatarSla } from '../utils/sla';
-import type { ChamadoComSla, DashboardData } from '../api/types';
+import type { DashboardData } from '../api/types';
 
-const CORES_CATEGORIA = ['#3B82F6', '#22C55E', '#F5A623', '#A78BFA', '#EF4444', '#8892A8'];
-
-function formatarDuracao(segundos: number | null): string {
-  if (!segundos) return 'N/A';
-  const horas = Math.floor(segundos / 3600);
-  const minutos = Math.round((segundos % 3600) / 60);
-  return `${horas}h ${minutos}m`;
-}
-
-function formatarData(iso: string): string {
-  return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
-/** Texto de variação para o painel "Indicadores de hoje" (verde = melhora, vermelho = piora). */
-function MiniDelta({ pct, invertido = false }: { pct: number | null; invertido?: boolean }) {
-  if (pct === null) return <p className="mini-stat__delta mini-stat__delta--neutral">Sem dado de ontem</p>;
-  if (pct === 0) return <p className="mini-stat__delta mini-stat__delta--neutral">Igual a ontem</p>;
+function delta(pct: number | null, invertido = false): { texto: string; classe: string } {
+  if (pct === null) return { texto: 'Sem dado de ontem', classe: 'stat-card__delta--neutral' };
+  if (pct === 0) return { texto: 'Igual a ontem', classe: 'stat-card__delta--neutral' };
   const melhora = invertido ? pct < 0 : pct > 0;
-  const Seta = pct > 0 ? ArrowUp : ArrowDown;
-  // Quando o valor de ontem é muito baixo (perto de zero), a variação percentual
-  // explode (ex.: 14216%) e quebra o layout do card. Acima de 999% não agrega
-  // informação útil, então mostramos um teto em vez do número exato.
-  const abs = Math.abs(pct);
-  const texto = abs > 999 ? '999%+' : `${abs}%`;
-  return (
-    <p className={`mini-stat__delta ${melhora ? 'mini-stat__delta--up' : 'mini-stat__delta--down'}`}>
-      <Seta size={12} strokeWidth={2.5} style={{ verticalAlign: '-1px' }} /> {texto} vs. ontem
-    </p>
-  );
-}
-
-function SlaCell({ segundos }: { segundos: number | null }) {
-  const sla = formatarSla(segundos);
-  if (!sla) return <span className="text-muted">—</span>;
-  return (
-    <span className={`chip${sla.critico ? ' chip--alerta' : ''}`} style={{ fontSize: 11 }}>
-      {sla.vencido ? `Vencido há ${sla.texto}` : `Vence em ${sla.texto}`}
-    </span>
-  );
+  const abs = Math.abs(pct) > 999 ? '999%+' : `${Math.abs(pct)}%`;
+  return {
+    texto: `${pct > 0 ? '↑' : '↓'} ${abs} vs. ontem`,
+    classe: melhora ? 'stat-card__delta--up' : 'stat-card__delta--down',
+  };
 }
 
 export function Dashboard() {
-  const navigate = useNavigate();
   const { usuario } = useAuth();
   const [dados, setDados] = useState<DashboardData | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -74,9 +35,9 @@ export function Dashboard() {
   const [chamadoAbertoId, setChamadoAbertoId] = useState<number | null>(null);
   const [janelaGrafico, setJanelaGrafico] = useState<7 | 14>(7);
 
-  async function carregar() {
+  async function carregar(dias = janelaGrafico) {
     try {
-      const { data } = await api.get<DashboardData>('/dashboard');
+      const { data } = await api.get<DashboardData>('/dashboard', { params: { dias } });
       setDados(data);
     } catch {
       setErro('Não foi possível carregar o dashboard. Verifique se você está logado como administrador.');
@@ -86,10 +47,10 @@ export function Dashboard() {
   }
 
   useEffect(() => {
-    carregar();
-    const intervalo = setInterval(carregar, POLLING_MS);
+    carregar(janelaGrafico);
+    const intervalo = setInterval(() => carregar(janelaGrafico), POLLING_MS);
     function aoFocar() {
-      if (document.visibilityState === 'visible') carregar();
+      if (document.visibilityState === 'visible') carregar(janelaGrafico);
     }
     document.addEventListener('visibilitychange', aoFocar);
     window.addEventListener('focus', aoFocar);
@@ -99,15 +60,7 @@ export function Dashboard() {
       window.removeEventListener('focus', aoFocar);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const serieGrafico = useMemo(() => {
-    if (!dados) return [];
-    // A API sempre traz 7 dias; "14 dias" é só um placeholder de UI por ora
-    // (o seletor existe para quando o backend passar a trazer uma janela maior).
-    return dados.serie_sete_dias;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dados, janelaGrafico]);
+  }, [janelaGrafico]);
 
   if (carregando) {
     return (
@@ -125,100 +78,88 @@ export function Dashboard() {
     );
   }
 
+  const subtitulo = `Hoje: ${dados.alertas_sla.critico} crítico${dados.alertas_sla.critico === 1 ? '' : 's'} · ` +
+    `${dados.aguardando_cliente_total} aguardando resposta · ${dados.resolvidos_hoje} resolvidos`;
+
+  const dTotal = delta(dados.total_chamados_delta_pct);
+  const dAndamento = delta(dados.em_andamento_delta_pct);
+  const dResolvidos = delta(dados.resolvidos_hoje_delta_pct);
+  // "Total de chamados" é o único KPI com sparkline: é o único que representa
+  // genuinamente uma tendência de vários dias. "Resolvidos hoje" é um número de
+  // um único dia (sparkline de 7 dias ali seria enganosa); "Em andamento" e
+  // "Aguardando cliente" são fotografias do estado atual, sem histórico diário.
+  const trendCriados = dados.serie_sete_dias.map((d) => d.total);
+
   return (
     <AppLayout
       titulo={`Bom dia${usuario ? `, ${usuario.nome.split(' ')[0]}` : ''} 👋`}
-      subtitulo="Visão geral dos chamados de TI"
+      subtitulo={subtitulo}
     >
-      {/*
-        1. O que precisa da minha atenção agora, lado a lado com os indicadores
-        do dia — ambos são leitura rápida de "como estamos agora" e ganham
-        destaque compartilhando a primeira faixa da tela.
-      */}
-      <div className="dashboard-grid" style={{ marginBottom: 20, alignItems: 'stretch' }}>
-        <HeroPrioridadeAgora chamado={dados.prioridade_agora} onAbrir={(id) => setChamadoAbertoId(id)} />
-
-        {/* Indicadores de hoje */}
-        <div className="card">
-          <div className="card__header" style={{ paddingBottom: 4 }}>
-            <h3 className="card__title">Indicadores de hoje</h3>
-          </div>
-          <div className="mini-stat-grid">
-            <div className="mini-stat">
-              <p className="mini-stat__label">SLA dentro do prazo</p>
-              <p className="mini-stat__value">{dados.sla_dentro_prazo_pct !== null ? `${dados.sla_dentro_prazo_pct}%` : 'N/A'}</p>
-              <MiniDelta pct={dados.sla_dentro_prazo_delta_pct} />
-            </div>
-            <div className="mini-stat">
-              <p className="mini-stat__label">Resolvidos hoje</p>
-              <p className="mini-stat__value">{dados.resolvidos_hoje}</p>
-              <MiniDelta pct={dados.resolvidos_hoje_delta_pct} />
-            </div>
-            <div className="mini-stat">
-              <p className="mini-stat__label">Tempo médio de resolução</p>
-              <p className="mini-stat__value">{formatarDuracao(dados.tempo_medio_segundos)}</p>
-              <MiniDelta pct={dados.tempo_medio_delta_pct} invertido />
-            </div>
-            <div className="mini-stat">
-              <p className="mini-stat__label">Abertos</p>
-              <p className="mini-stat__value">{dados.por_status.aberto?.total ?? 0}</p>
-              <p className="mini-stat__delta mini-stat__delta--neutral">
-                {dados.por_status.aberto?.sem_responsavel ?? 0} sem responsável
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* KPIs: leitura de estado geral em menos de 3 segundos */}
+      <div className="stat-grid">
+        <StatCard
+          icon={<Ticket size={20} strokeWidth={2} />}
+          iconBg="linear-gradient(135deg,#3B82F6,#2563EB)"
+          label="Total de chamados"
+          value={dados.total_chamados}
+          footer={<p className={`stat-card__delta ${dTotal.classe}`}>{dTotal.texto}</p>}
+          sparkline={trendCriados}
+          sparklineColor="#3B82F6"
+        />
+        <StatCard
+          icon={<Clock3 size={20} strokeWidth={2} />}
+          iconBg="linear-gradient(135deg,#F5A623,#E08E00)"
+          label="Em andamento"
+          value={dados.por_status.em_andamento?.total ?? 0}
+          footer={<p className={`stat-card__delta ${dAndamento.classe}`}>{dAndamento.texto}</p>}
+        />
+        <StatCard
+          icon={<MessageCircleMore size={20} strokeWidth={2} />}
+          iconBg="linear-gradient(135deg,#A78BFA,#7C5CF0)"
+          label="Aguardando cliente"
+          value={dados.aguardando_cliente_total}
+          footer={<p className="stat-card__delta stat-card__delta--neutral">Aguardando resposta do solicitante</p>}
+        />
+        <StatCard
+          icon={<CheckCircle2 size={20} strokeWidth={2} />}
+          iconBg="linear-gradient(135deg,#22C55E,#16A34A)"
+          label="Resolvidos hoje"
+          value={dados.resolvidos_hoje}
+          footer={<p className={`stat-card__delta ${dResolvidos.classe}`}>{dResolvidos.texto}</p>}
+        />
       </div>
 
-      {/*
-        2ª faixa: Minha fila (o que exige ação minha agora) ao lado de Atividade
-        recente (contexto rápido do que está rolando) — ambas leituras curtas,
-        ficam bem lado a lado.
-      */}
-      <div className="dashboard-grid" style={{ marginBottom: 20, alignItems: 'stretch' }}>
-        <MinhaFilaCard minhaFila={dados.minha_fila} onAbrirChamado={(id) => setChamadoAbertoId(id)} />
-        <FeedAtividades atividades={dados.atividade_recente} />
+      {/* SITUAÇÃO + TRABALHO: fila operacional à esquerda; à direita, Desempenho
+          ocupa a largura toda em cima, com Alertas de SLA e Atividade recente
+          lado a lado embaixo. */}
+      <div className="dashboard-row-3col">
+        <FilaAtendimento
+          chamados={dados.chamados_ativos}
+          onAbrirChamado={setChamadoAbertoId}
+          totalChamados={dados.total_chamados}
+          resolvidosHoje={dados.resolvidos_hoje}
+        />
+        <DesempenhoTime
+          taxaResolucaoPct={dados.taxa_resolucao_pct}
+          tempoMedioSegundos={dados.tempo_medio_segundos}
+          tempoMedioDeltaPct={dados.tempo_medio_delta_pct}
+          slaDentroPrazoPct={dados.sla_dentro_prazo_pct}
+          serieResolvidosSeteDias={dados.serie_resolvidos_sete_dias}
+        />
+        <AlertasSla alertas={dados.alertas_sla} />
+        <FeedAtividades atividades={dados.atividade_recente} className="feed-atividades--flex" />
+        <ChamadosPorEquipamento dados={dados.por_equipamento} />
       </div>
 
-      {/* 3ª faixa: Últimos chamados ativos — visão operacional completa, sozinha na linha */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card__header" style={{ paddingBottom: 12 }}>
-          <h3 className="card__title">Últimos chamados ativos</h3>
-          <button className="btn btn--secondary" onClick={() => navigate('/chamados')}>
-            Ver todos <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', marginLeft: 2 }} />
-          </button>
-        </div>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th><th>Título</th><th>Cliente</th>
-              <th>Prioridade</th><th>SLA</th><th>Atualizado em</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dados.chamados_ativos.length === 0 && (
-              <tr><td colSpan={6} className="empty-state">Nenhum chamado ativo no momento.</td></tr>
-            )}
-            {dados.chamados_ativos.map((c: ChamadoComSla) => (
-              <tr key={c.id} className="clickable" onClick={() => setChamadoAbertoId(c.id)}>
-                <td className={`td--prioridade-${c.prioridade_atual}`}>#{c.id}</td>
-                <td>{c.titulo}</td>
-                <td>{c.aberto_por_nome ?? '—'}</td>
-                <td><PrioridadeBadge prioridade={c.prioridade_atual} /></td>
-                <td><SlaCell segundos={c.sla_segundos_restantes} /></td>
-                <td>{formatarData(c.atualizado_em)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Faixa inferior full-width: tendência, categoria e agenda lado a lado */}
+      {/* ANÁLISE + ESTATÍSTICAS: gráficos, sem competir com as ações prioritárias acima */}
       <div className="dashboard-bottom-row">
-        {/* Mini-gráfico "Chamados nos últimos N dias" */}
+        <ChamadosPorCategoria dados={dados.por_categoria} />
+
+        <ChamadosPorSetor dados={dados.por_setor} />
+
         <div className="card">
           <div className="mini-chart-header">
-            <h3 className="card__title">Chamados recentes</h3>
+            <h3 className="card__title">Tendência de chamados</h3>
             <select
               className="mini-chart-select"
               value={janelaGrafico}
@@ -228,8 +169,17 @@ export function Dashboard() {
               <option value={14}>14 dias</option>
             </select>
           </div>
-          <ResponsiveContainer width="100%" height={140}>
-            <LineChart data={serieGrafico}>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={dados.serie_sete_dias} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradTendencia" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                </linearGradient>
+                <filter id="brilhoPontoTendencia" x="-150%" y="-150%" width="400%" height="400%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="#3B82F6" floodOpacity={0.9} />
+                </filter>
+              </defs>
               <XAxis
                 dataKey="dia"
                 tickFormatter={(d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
@@ -240,43 +190,22 @@ export function Dashboard() {
               />
               <Tooltip
                 labelFormatter={(d) => new Date(d as string).toLocaleDateString('pt-BR')}
+                formatter={(v) => [`${v} chamados`, '']}
                 contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }}
                 labelStyle={{ color: '#8891A6' }}
               />
-              <Line type="monotone" dataKey="total" name="Chamados" stroke="#3B82F6" strokeWidth={2} dot={false} />
-            </LineChart>
+              <Area
+                type="monotone"
+                dataKey="total"
+                name="Chamados criados"
+                stroke="#3B82F6"
+                strokeWidth={2}
+                fill="url(#gradTendencia)"
+                dot={{ r: 3.5, fill: '#FFFFFF', stroke: '#3B82F6', strokeWidth: 1.5, filter: 'url(#brilhoPontoTendencia)' }}
+                activeDot={{ r: 5.5, fill: '#FFFFFF', stroke: '#3B82F6', strokeWidth: 2, filter: 'url(#brilhoPontoTendencia)' }}
+              />
+            </AreaChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Chamados por categoria */}
-        <div className="card">
-          <div className="card__header" style={{ paddingBottom: 4 }}>
-            <h3 className="card__title">Chamados por categoria (mês)</h3>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-              <Pie data={dados.por_categoria} dataKey="total" nameKey="nome" innerRadius={45} outerRadius={68} cy="42%">
-                {dados.por_categoria.map((_, i) => (
-                  <Cell key={i} fill={CORES_CATEGORIA[i % CORES_CATEGORIA.length]} stroke="#10162A" />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }} />
-              <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ fontSize: 11, lineHeight: '16px', color: '#8891A6' }} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Agenda de hoje — módulo ainda não implementado */}
-        <div className="card">
-          <div className="card__header" style={{ paddingBottom: 4 }}>
-            <h3 className="card__title">Agenda de hoje</h3>
-          </div>
-          <div className="agenda-placeholder">
-            <div className="agenda-placeholder__icon"><CalendarDays size={26} strokeWidth={1.75} /></div>
-            <p className="agenda-placeholder__texto">
-              O módulo de Agenda ainda não foi implementado.<br />Em breve: manutenções e eventos de TI aqui.
-            </p>
-          </div>
         </div>
       </div>
 

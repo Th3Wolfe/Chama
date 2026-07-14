@@ -38,9 +38,9 @@ function textoAtividade(a: AtividadeRecente): string {
   }
 }
 
-export function FeedAtividades({ atividades }: { atividades: AtividadeRecente[] }) {
+export function FeedAtividades({ atividades, className }: { atividades: AtividadeRecente[]; className?: string }) {
   return (
-    <div className="card">
+    <div className={`card${className ? ` ${className}` : ''}`}>
       <div className="card__header" style={{ paddingBottom: 12 }}>
         <h3 className="card__title">Atividade recente</h3>
       </div>
