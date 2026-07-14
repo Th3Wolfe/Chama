@@ -195,4 +195,5 @@ export interface DashboardData {
   taxa_resolucao_pct: number | null;
   alertas_sla: { critico: number; alto: number; medio: number };
   por_setor: { nome: string; total: number }[];
+  serie_resolvidos_sete_dias: { dia: string; total: number }[];
 }

@@ -41,6 +41,9 @@ const SELECT_CHAMADO_ATIVO = `
 
 router.get('/', requireAdmin, async (req, res) => {
   const meuId = req.user.id;
+  // Período do gráfico "Tendência de chamados" — só aceita valores pré-definidos
+  // (evita interpolar algo arbitrário de querystring direto no SQL).
+  const diasTendencia = [7, 14, 30].includes(Number(req.query.dias)) ? Number(req.query.dias) : 7;
 
   const [
     contagens,
@@ -66,6 +69,8 @@ router.get('/', requireAdmin, async (req, res) => {
     resolvidosTotal,
     alertasSla,
     porSetor,
+    serieResolvidosSeteDias,
+    slaGeral,
   ] = await Promise.all([
     pool.query(`SELECT * FROM vw_dashboard_admin`),
     pool.query(`
@@ -101,13 +106,13 @@ router.get('/', requireAdmin, async (req, res) => {
       WHERE date_trunc('month', c.criado_em) = date_trunc('month', CURRENT_DATE)
       GROUP BY cat.nome ORDER BY total DESC
     `),
-    // Chamados criados por dia, últimos 7 dias — alimenta o mini-gráfico
-    // "Chamados nos últimos 7 dias" da coluna direita.
+    // Chamados criados por dia, no período selecionado — alimenta o gráfico
+    // "Tendência de chamados".
     pool.query(`
       SELECT
         dia::date AS dia,
         COUNT(c.id) FILTER (WHERE c.criado_em::date = dia)::int AS total
-      FROM generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, INTERVAL '1 day') AS dia
+      FROM generate_series(CURRENT_DATE - INTERVAL '${diasTendencia - 1} days', CURRENT_DATE, INTERVAL '1 day') AS dia
       LEFT JOIN chamados c ON c.criado_em::date = dia
       GROUP BY dia ORDER BY dia
     `),
@@ -233,6 +238,26 @@ router.get('/', requireAdmin, async (req, res) => {
       WHERE date_trunc('month', c.criado_em) = date_trunc('month', CURRENT_DATE)
       GROUP BY s.nome ORDER BY total DESC
     `),
+    // Resolvidos por dia (últimos 7 dias) — série própria do card "Desempenho da
+    // equipe", intencionalmente diferente da série de criados usada em "Tendência
+    // de chamados" (uma mostra entrada de trabalho, a outra mostra vazão da equipe).
+    pool.query(`
+      SELECT dia::date AS dia, COUNT(c.id)::int AS total
+      FROM generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, INTERVAL '1 day') AS dia
+      LEFT JOIN chamados c ON c.resolvido_em::date = dia
+      GROUP BY dia ORDER BY dia
+    `),
+    // SLA geral (todo o histórico, não só hoje): usado no card "Desempenho da
+    // equipe" para ficar consistente com as outras métricas do mesmo card (taxa
+    // de resolução e tempo médio também são calculados sobre todo o histórico —
+    // usar só "hoje" fazia esse número virar N/A sempre que não havia resolução
+    // no dia, parecendo quebrado ao lado dos outros dois valores).
+    pool.query(`
+      SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE resolvido_em <= criado_em + ${SLA_INTERVALO})::int AS dentro
+      FROM chamados c WHERE resolvido_em IS NOT NULL
+    `),
   ]);
 
   const porStatus = Object.fromEntries(
@@ -254,6 +279,7 @@ router.get('/', requireAdmin, async (req, res) => {
 
   const slaPctHoje = slaTotalHoje > 0 ? Math.round((slaDentroHoje / slaTotalHoje) * 100) : null;
   const slaPctOntem = slaTotalOntem > 0 ? Math.round((slaDentroOntem / slaTotalOntem) * 100) : null;
+  const slaPctGeral = slaGeral.rows[0].total > 0 ? Math.round((slaGeral.rows[0].dentro / slaGeral.rows[0].total) * 100) : null;
 
   res.json({
     por_status: porStatus,
@@ -263,7 +289,7 @@ router.get('/', requireAdmin, async (req, res) => {
     tempo_medio_delta_pct: variacaoPercentual(medioHoje, medioOntem),
     resolvidos_hoje: resolvidosHojeTotal,
     resolvidos_hoje_delta_pct: variacaoPercentual(resolvidosHojeTotal, resolvidosOntemTotal),
-    sla_dentro_prazo_pct: slaPctHoje,
+    sla_dentro_prazo_pct: slaPctGeral,
     sla_dentro_prazo_delta_pct: slaPctHoje !== null && slaPctOntem !== null ? slaPctHoje - slaPctOntem : null,
     fila_sem_responsavel: filaSemResponsavel.rows,
     chamados_ativos: chamadosAtivos.rows,
@@ -286,6 +312,7 @@ router.get('/', requireAdmin, async (req, res) => {
       : null,
     alertas_sla: alertasSla.rows[0],
     por_setor: porSetor.rows,
+    serie_resolvidos_sete_dias: serieResolvidosSeteDias.rows,
   });
 });
 

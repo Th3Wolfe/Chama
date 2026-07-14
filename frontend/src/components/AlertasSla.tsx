@@ -19,7 +19,11 @@ export function AlertasSla({ alertas }: { alertas: { critico: number; alto: numb
       </div>
       <div className="alertas-sla__lista">
         {total === 0 && (
-          <div className="empty-state" style={{ padding: '16px 0' }}>Nenhum chamado próximo do vencimento. 🎉</div>
+          <div className="fila-atendimento__vazio" style={{ padding: '12px 8px' }}>
+            <span className="fila-atendimento__vazio-icon">🎉</span>
+            <p className="fila-atendimento__vazio-titulo">Tudo em dia</p>
+            <p className="fila-atendimento__vazio-desc">Nenhum chamado próximo do vencimento.</p>
+          </div>
         )}
         {FAIXAS.filter((f) => alertas[f.key] > 0).map((f) => (
           <button key={f.key} className={`alertas-sla__item alertas-sla__item--${f.tom}`} onClick={() => navigate('/chamados')}>

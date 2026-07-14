@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from 'recharts';
+import { useEffect, useState } from 'react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
 import { Ticket, Clock3, MessageCircleMore, CheckCircle2 } from 'lucide-react';
 import { AppLayout } from '../components/Layout/AppLayout';
 import { ChamadoModal } from '../components/ChamadoModal';
@@ -34,9 +34,9 @@ export function Dashboard() {
   const [chamadoAbertoId, setChamadoAbertoId] = useState<number | null>(null);
   const [janelaGrafico, setJanelaGrafico] = useState<7 | 14>(7);
 
-  async function carregar() {
+  async function carregar(dias = janelaGrafico) {
     try {
-      const { data } = await api.get<DashboardData>('/dashboard');
+      const { data } = await api.get<DashboardData>('/dashboard', { params: { dias } });
       setDados(data);
     } catch {
       setErro('Não foi possível carregar o dashboard. Verifique se você está logado como administrador.');
@@ -46,10 +46,10 @@ export function Dashboard() {
   }
 
   useEffect(() => {
-    carregar();
-    const intervalo = setInterval(carregar, POLLING_MS);
+    carregar(janelaGrafico);
+    const intervalo = setInterval(() => carregar(janelaGrafico), POLLING_MS);
     function aoFocar() {
-      if (document.visibilityState === 'visible') carregar();
+      if (document.visibilityState === 'visible') carregar(janelaGrafico);
     }
     document.addEventListener('visibilitychange', aoFocar);
     window.addEventListener('focus', aoFocar);
@@ -59,9 +59,7 @@ export function Dashboard() {
       window.removeEventListener('focus', aoFocar);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const serieGrafico = useMemo(() => (dados ? dados.serie_sete_dias : []), [dados, janelaGrafico]);
+  }, [janelaGrafico]);
 
   if (carregando) {
     return (
@@ -85,10 +83,11 @@ export function Dashboard() {
   const dTotal = delta(dados.total_chamados_delta_pct);
   const dAndamento = delta(dados.em_andamento_delta_pct);
   const dResolvidos = delta(dados.resolvidos_hoje_delta_pct);
-  // Série compartilhada para as sparklines dos KPIs: não há histórico diário por
-  // métrica no backend, então usamos o volume de chamados dos últimos 7 dias como
-  // referência visual de tendência (mesma lógica do gráfico "Tendência de chamados").
-  const trend = dados.serie_sete_dias.map((d) => d.total);
+  // "Total de chamados" é o único KPI com sparkline: é o único que representa
+  // genuinamente uma tendência de vários dias. "Resolvidos hoje" é um número de
+  // um único dia (sparkline de 7 dias ali seria enganosa); "Em andamento" e
+  // "Aguardando cliente" são fotografias do estado atual, sem histórico diário.
+  const trendCriados = dados.serie_sete_dias.map((d) => d.total);
 
   return (
     <AppLayout
@@ -103,7 +102,7 @@ export function Dashboard() {
           label="Total de chamados"
           value={dados.total_chamados}
           footer={<p className={`stat-card__delta ${dTotal.classe}`}>{dTotal.texto}</p>}
-          sparkline={trend}
+          sparkline={trendCriados}
           sparklineColor="#3B82F6"
         />
         <StatCard
@@ -112,8 +111,6 @@ export function Dashboard() {
           label="Em andamento"
           value={dados.por_status.em_andamento?.total ?? 0}
           footer={<p className={`stat-card__delta ${dAndamento.classe}`}>{dAndamento.texto}</p>}
-          sparkline={trend}
-          sparklineColor="#F5A623"
         />
         <StatCard
           icon={<MessageCircleMore size={20} strokeWidth={2} />}
@@ -121,8 +118,6 @@ export function Dashboard() {
           label="Aguardando cliente"
           value={dados.aguardando_cliente_total}
           footer={<p className="stat-card__delta stat-card__delta--neutral">Aguardando resposta do solicitante</p>}
-          sparkline={trend}
-          sparklineColor="#A78BFA"
         />
         <StatCard
           icon={<CheckCircle2 size={20} strokeWidth={2} />}
@@ -130,25 +125,28 @@ export function Dashboard() {
           label="Resolvidos hoje"
           value={dados.resolvidos_hoje}
           footer={<p className={`stat-card__delta ${dResolvidos.classe}`}>{dResolvidos.texto}</p>}
-          sparkline={trend}
-          sparklineColor="#22C55E"
         />
       </div>
 
-      {/* SITUAÇÃO + TRABALHO: fila operacional, desempenho da equipe e alertas/atividade lado a lado */}
+      {/* SITUAÇÃO + TRABALHO: fila operacional à esquerda; à direita, Desempenho
+          ocupa a largura toda em cima, com Alertas de SLA e Atividade recente
+          lado a lado embaixo. */}
       <div className="dashboard-row-3col">
-        <FilaAtendimento chamados={dados.chamados_ativos} onAbrirChamado={setChamadoAbertoId} />
+        <FilaAtendimento
+          chamados={dados.chamados_ativos}
+          onAbrirChamado={setChamadoAbertoId}
+          totalChamados={dados.total_chamados}
+          resolvidosHoje={dados.resolvidos_hoje}
+        />
         <DesempenhoTime
           taxaResolucaoPct={dados.taxa_resolucao_pct}
           tempoMedioSegundos={dados.tempo_medio_segundos}
           tempoMedioDeltaPct={dados.tempo_medio_delta_pct}
           slaDentroPrazoPct={dados.sla_dentro_prazo_pct}
-          serieSeteDias={dados.serie_sete_dias}
+          serieResolvidosSeteDias={dados.serie_resolvidos_sete_dias}
         />
-        <div className="dashboard-row-3col__stack">
-          <AlertasSla alertas={dados.alertas_sla} />
-          <FeedAtividades atividades={dados.atividade_recente} />
-        </div>
+        <AlertasSla alertas={dados.alertas_sla} />
+        <FeedAtividades atividades={dados.atividade_recente} className="feed-atividades--flex" />
       </div>
 
       {/* ANÁLISE + ESTATÍSTICAS: gráficos, sem competir com as ações prioritárias acima */}
@@ -170,7 +168,13 @@ export function Dashboard() {
             </select>
           </div>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={serieGrafico}>
+            <AreaChart data={dados.serie_sete_dias} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradTendencia" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <XAxis
                 dataKey="dia"
                 tickFormatter={(d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
@@ -181,11 +185,12 @@ export function Dashboard() {
               />
               <Tooltip
                 labelFormatter={(d) => new Date(d as string).toLocaleDateString('pt-BR')}
+                formatter={(v) => [`${v} chamados`, '']}
                 contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }}
                 labelStyle={{ color: '#8891A6' }}
               />
-              <Line type="monotone" dataKey="total" name="Chamados" stroke="#3B82F6" strokeWidth={2} dot={false} />
-            </LineChart>
+              <Area type="monotone" dataKey="total" name="Chamados criados" stroke="#3B82F6" strokeWidth={2} fill="url(#gradTendencia)" dot={{ r: 3, fill: '#3B82F6', strokeWidth: 0 }} activeDot={{ r: 5 }} />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>

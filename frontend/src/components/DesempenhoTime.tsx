@@ -1,4 +1,4 @@
-import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
 
 function formatarDuracao(segundos: number | null): string {
   if (!segundos) return 'N/A';
@@ -12,13 +12,13 @@ export function DesempenhoTime({
   tempoMedioSegundos,
   tempoMedioDeltaPct,
   slaDentroPrazoPct,
-  serieSeteDias,
+  serieResolvidosSeteDias,
 }: {
   taxaResolucaoPct: number | null;
   tempoMedioSegundos: number | null;
   tempoMedioDeltaPct: number | null;
   slaDentroPrazoPct: number | null;
-  serieSeteDias: { dia: string; total: number }[];
+  serieResolvidosSeteDias: { dia: string; total: number }[];
 }) {
   const pct = taxaResolucaoPct ?? 0;
 
@@ -57,9 +57,16 @@ export function DesempenhoTime({
         </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 90 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={serieSeteDias} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+      <div className="desempenho-time__chart-legenda">Chamados resolvidos · últimos 7 dias</div>
+      <div className="desempenho-time__chart">
+        <ResponsiveContainer width="100%" height={110}>
+          <AreaChart data={serieResolvidosSeteDias} margin={{ top: 6, right: 8, left: 8, bottom: 0 }}>
+            <defs>
+              <linearGradient id="gradResolvidos" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <XAxis
               dataKey="dia"
               tickFormatter={(d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
@@ -70,11 +77,12 @@ export function DesempenhoTime({
             />
             <Tooltip
               labelFormatter={(d) => new Date(d as string).toLocaleDateString('pt-BR')}
+              formatter={(v) => [`${v} resolvidos`, '']}
               contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }}
               labelStyle={{ color: '#8891A6' }}
             />
-            <Line type="monotone" dataKey="total" name="Chamados" stroke="#3B82F6" strokeWidth={2} dot={false} />
-          </LineChart>
+            <Area type="monotone" dataKey="total" stroke="#3B82F6" strokeWidth={2} fill="url(#gradResolvidos)" dot={{ r: 3, fill: '#3B82F6', strokeWidth: 0 }} activeDot={{ r: 5 }} />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>

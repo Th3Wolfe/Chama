@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, MoreVertical } from 'lucide-react';
+import { ArrowRight, MoreVertical, PartyPopper } from 'lucide-react';
 import { PrioridadeBadge } from './Badge';
 import { formatarSla } from '../utils/sla';
 import type { ChamadoComSla } from '../api/types';
@@ -30,13 +30,32 @@ function classeSla(segundos: number | null): string {
 export function FilaAtendimento({
   chamados,
   onAbrirChamado,
+  totalChamados,
+  resolvidosHoje,
 }: {
   chamados: ChamadoComSla[];
   onAbrirChamado: (id: number) => void;
+  totalChamados: number;
+  resolvidosHoje: number;
 }) {
   const navigate = useNavigate();
   const urgentes = chamados.filter((c) => c.prioridade_atual === 'alta').length;
   const visiveis = chamados.slice(0, 4);
+
+  // Mensagem contextual do estado vazio: sem isso, "fila zerada" ao lado de um
+  // "Total de chamados: 10" no topo passa a impressão de que algo está errado.
+  // Explicitar o motivo (resolveu hoje / já estava tudo em dia / zero chamados
+  // no sistema) deixa claro que o número bate.
+  let vazioTitulo = 'Fila zerada';
+  let vazioDesc = 'Nenhum chamado ativo aguardando atendimento agora.';
+  if (totalChamados === 0) {
+    vazioTitulo = 'Nenhum chamado ainda';
+    vazioDesc = 'Assim que um chamado for aberto, ele aparece aqui.';
+  } else if (resolvidosHoje > 0) {
+    vazioDesc = `Você resolveu ${resolvidosHoje} chamado${resolvidosHoje > 1 ? 's' : ''} hoje e não há nada pendente agora.`;
+  } else {
+    vazioDesc = 'Todos os chamados já foram atendidos. Nada pendente no momento.';
+  }
 
   return (
     <div className="card fila-atendimento">
@@ -52,7 +71,11 @@ export function FilaAtendimento({
 
       <div className="fila-atendimento__lista">
         {visiveis.length === 0 && (
-          <div className="empty-state" style={{ padding: '20px 0' }}>Nenhum chamado ativo no momento.</div>
+          <div className="fila-atendimento__vazio">
+            <span className="fila-atendimento__vazio-icon"><PartyPopper size={22} strokeWidth={1.75} /></span>
+            <p className="fila-atendimento__vazio-titulo">{vazioTitulo}</p>
+            <p className="fila-atendimento__vazio-desc">{vazioDesc}</p>
+          </div>
         )}
         {visiveis.map((c) => {
           const sla = formatarSla(c.sla_segundos_restantes);

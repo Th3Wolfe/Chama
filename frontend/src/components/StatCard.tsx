@@ -8,16 +8,18 @@ function Sparkline({ dados, cor }: { dados: number[]; cor: string }) {
   const min = Math.min(...dados);
   const max = Math.max(...dados);
   const range = max - min || 1;
-  const pontos = dados
-    .map((v, i) => {
-      const x = (i / (dados.length - 1)) * w;
-      const y = h - ((v - min) / range) * (h - 4) - 2;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
+  const coords = dados.map((v, i) => {
+    const x = (i / (dados.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return { x, y };
+  });
+  const pontos = coords.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   return (
     <svg className="stat-card__sparkline" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
       <polyline points={pontos} fill="none" stroke={cor} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
+      {coords.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r={1.6} fill={cor} />
+      ))}
     </svg>
   );
 }
