@@ -3,7 +3,23 @@ const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
 const pool = require('../db');
 const { requireAdmin } = require('../middleware');
+const { buscarDadosRelatorio } = require('../relatorio/dados');
 const router = express.Router();
+
+// Relatório Executivo Operacional — dados agregados de um mês específico.
+// Só os dados por enquanto (sem HTML/PDF ainda, isso entra nas próximas sprints).
+// mes no formato YYYY-MM; sem o parâmetro, assume o mês corrente.
+router.get('/executivo/dados', requireAdmin, async (req, res) => {
+  try {
+    const dados = await buscarDadosRelatorio(req.query.mes);
+    res.json(dados);
+  } catch (err) {
+    if (err.message.includes('Parâmetro "mes" inválido')) {
+      return res.status(400).json({ erro: err.message });
+    }
+    throw err;
+  }
+});
 
 async function enviarExcel(res, nomeArquivo, colunas, linhas) {
   const workbook = new ExcelJS.Workbook();

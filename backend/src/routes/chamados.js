@@ -215,6 +215,11 @@ router.patch('/:id', requireAuth, async (req, res) => {
     campos.push(`status = $${i++}`);
     valores.push(status);
     if (status === 'resolvido') { campos.push(`resolvido_em = now()`); }
+    // Primeira vez que o chamado é atendido: fica registrado mesmo que o
+    // status volte/avance depois (não sobrescreve se já tiver sido setado).
+    if (status === 'em_andamento' && !chamado.primeira_resposta_em) {
+      campos.push(`primeira_resposta_em = now()`);
+    }
   }
 
   if (campos.length === 0) return res.status(400).json({ erro: 'Nenhum campo para atualizar.' });
