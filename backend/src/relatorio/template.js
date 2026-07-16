@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { icone } = require('./icones');
 const { gerarDestaques } = require('./destaques');
-const { gerarGraficoLinha, gerarHeatmap } = require('./graficos-svg');
+const { gerarGraficoLinha, gerarHeatmap, gerarDonut, gerarBarrasHorizontais, gerarGaugeSla } = require('./graficos-svg');
+const { gerarResumoInteligente } = require('./resumo-inteligente');
+const { formatarDuracao } = require('./formatadores');
 
 // Ícone embutido como base64: o Puppeteer renderiza esse HTML isoladamente
 // (sem o frontend rodando do lado), então não dá pra apontar pra
@@ -54,6 +56,7 @@ const CSS_BASE = `
     display: grid;
     grid-template-columns: 220px 1fr;
     border-bottom: 1px solid var(--color-border);
+    break-inside: avoid;
   }
 
   .topo__conteudo {
@@ -166,14 +169,7 @@ const CSS_BASE = `
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-  }
-
-  .placeholder-secoes {
-    color: var(--color-text-muted);
-    font-size: 12px;
-    padding: 20px;
-    border: 1px dashed var(--color-border);
-    border-radius: var(--radius-md);
+    break-inside: avoid;
   }
 
   /* ---------- Resumo executivo (seção 2, texto introdutório) ---------- */
@@ -373,6 +369,449 @@ const CSS_BASE = `
   .grafico-card__corpo svg.heatmap-svg {
     height: 100%;
   }
+
+  /* ---------- Distribuição: categoria / setor / prioridade (seção 6) ---------- */
+  .secao-distribuicao {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .distrib-card {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .distrib-card__cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .distrib-card__titulo {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-text);
+  }
+
+  .distrib-card__filtro {
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  /* Cresce pra ocupar a altura que sobrar no card (o card em si estica pra
+     acompanhar a altura dos vizinhos — ver .secao-distribuicao) e centraliza
+     o conteúdo verticalmente nesse espaço, em vez de deixar tudo grudado no
+     topo com uma sobra de espaço em branco embaixo. */
+  .distrib-card__corpo-donut {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* Diâmetro do anel acompanha a altura disponível (até um teto, pra não
+     ficar gigante em cards muito altos com poucos itens na legenda). O
+     max-width é igualmente necessário: sem ele, em cards altos (ex.: ao
+     lado do card de setor com 5 linhas) o donut cresce livre pela altura e,
+     por causa do aspect-ratio 1:1, engole quase toda a largura do card,
+     deixando a legenda espremida a ponto de truncar até o primeiro caractere. */
+  .distrib-card__donut {
+    flex: 0 0 auto;
+    height: 100%;
+    max-height: 180px;
+    max-width: 42%;
+    aspect-ratio: 1 / 1;
+  }
+
+  .distrib-card__donut svg {
+    display: block;
+    height: 100%;
+    width: auto;
+  }
+
+  .distrib-card__legenda {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 96px;
+  }
+
+  .distrib-legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    color: var(--color-text-muted);
+  }
+
+  .distrib-legenda-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .distrib-legenda-nome {
+    color: var(--color-text);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .distrib-legenda-valor {
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  /* Mesma lógica do heatmap: o SVG das barras estica pra preencher a altura
+     do card (linhas mais altas quando sobra espaço, mais compactas quando
+     tem mais setores) em vez de ficar com um bloco fixo colado no topo. */
+  .distrib-card__corpo-barras {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .distrib-card__corpo-barras svg.barras-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ---------- Indicadores operacionais: equipamentos / técnicos / SLA (seção 7) ---------- */
+  .secao-indicadores {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: minmax(200px, auto);
+    gap: 20px;
+  }
+
+  .indic-card {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .indic-card__cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .indic-card__titulo {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-text);
+  }
+
+  .indic-card__filtro {
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  /* Corpo das tabelas cresce e distribui as linhas uniformemente pela altura
+     disponível — mesmo princípio dos cards de distribuição. */
+  .indic-card__linhas {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+
+  .indic-linha {
+    display: flex;
+    align-items: center;
+    gap: calc(10px * var(--escala-itens, 1));
+  }
+
+  .indic-linha__badge {
+    width: calc(28px * var(--escala-itens, 1));
+    height: calc(28px * var(--escala-itens, 1));
+    border-radius: 8px;
+    background: #1B2338;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .indic-linha__avatar {
+    width: calc(28px * var(--escala-itens, 1));
+    height: calc(28px * var(--escala-itens, 1));
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+    background: #1B2338;
+  }
+
+  .indic-linha__avatar-iniciais {
+    width: calc(28px * var(--escala-itens, 1));
+    height: calc(28px * var(--escala-itens, 1));
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #1B2338;
+    color: var(--color-text-muted);
+    font-size: calc(10px * var(--escala-itens, 1));
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .indic-linha__nome {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .indic-linha__nome-principal {
+    font-size: calc(10.5px * var(--escala-itens, 1));
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .indic-linha__nome-secundario {
+    font-size: calc(9px * var(--escala-itens, 1));
+    color: var(--color-text-muted);
+  }
+
+  .indic-linha__metrica {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .indic-linha__valor {
+    font-size: calc(10.5px * var(--escala-itens, 1));
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  .indic-linha__legenda {
+    font-size: calc(9px * var(--escala-itens, 1));
+    color: var(--color-text-muted);
+  }
+
+  .indic-card__gauge {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .indic-card__gauge-anel {
+    flex: 0 0 auto;
+    height: auto;
+    width: 100%;
+    max-height: 120px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .indic-card__gauge-anel svg {
+    display: block;
+    height: 100%;
+    width: auto;
+    margin: 0 auto;
+  }
+
+  /* Linha de badges compactos abaixo do gauge (uma coluna por prioridade),
+     em vez de lista vertical — usa a largura cheia do card, que é bem mais
+     espaço do que a sobra ao lado de um gauge de 150px. */
+  .sla-prioridade-lista {
+    display: flex;
+    width: 100%;
+    gap: 6px;
+  }
+
+  .sla-prioridade-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sla-prioridade-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .sla-prioridade-nome {
+    color: var(--color-text);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .sla-prioridade-fracao {
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* ---------- Resumo Executivo Inteligente + Comparativo (seções 8 e 9) ---------- */
+  .secao-final {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+    min-height: 260px;
+  }
+
+  .resumo-inteligente {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .resumo-inteligente__titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    margin-bottom: 14px;
+  }
+
+  .resumo-inteligente__titulo svg {
+    flex-shrink: 0;
+  }
+
+  .resumo-inteligente__lista {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 10px;
+  }
+
+  .resumo-inteligente__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .resumo-inteligente__item svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .resumo-inteligente__item-texto {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  .comparativo-card {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .comparativo-card__cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .comparativo-card__titulo {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+  }
+
+  .comparativo-card__filtro {
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  .comparativo-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .comparativo-tabela th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .comparativo-tabela th:not(:first-child),
+  .comparativo-tabela td:not(:first-child) {
+    text-align: right;
+  }
+
+  .comparativo-tabela td {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .comparativo-tabela tr:last-child td {
+    border-bottom: none;
+  }
+
+  .comparativo-tabela__variacao--positivo { color: var(--color-success); }
+  .comparativo-tabela__variacao--negativo { color: var(--color-danger); }
+
+  /* ---------- Rodapé ---------- */
+  .rodape-relatorio {
+    text-align: center;
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    padding-top: 12px;
+  }
+
+  /* No PDF gerado pelo Puppeteer (Sprint 8) o rodapé repetido em cada página
+     já vem do footerTemplate nativo (page.pdf), então o rodapé estático do
+     fim do documento é escondido no media "print" pra não duplicar. Ele
+     continua visível ao abrir o HTML isolado direto no navegador (modo
+     "screen"), que é o que o critério de aceite da Sprint 2 pedia. */
+  @media print {
+    .rodape-relatorio { display: none; }
+  }
 `;
 
 function formatarData(isoDate) {
@@ -393,19 +832,6 @@ function formatarGeradoEm(isoDateTime) {
   return { data, hora };
 }
 
-// Converte segundos em algo como "4h 12m" (ou "18m" se < 1h, ou "2d 3h" se
-// passar de 24h) — mesma ideia usada nos KPIs de tempo médio do protótipo.
-function formatarDuracao(segundos) {
-  if (segundos === null || segundos === undefined) return '—';
-  const totalMinutos = Math.round(segundos / 60);
-  const dias = Math.floor(totalMinutos / (60 * 24));
-  const horas = Math.floor((totalMinutos % (60 * 24)) / 60);
-  const minutos = totalMinutos % 60;
-  if (dias > 0) return `${dias}d ${horas}h`;
-  if (horas > 0) return `${minutos > 0 ? `${horas}h ${minutos}m` : `${horas}h`}`;
-  return `${minutos}m`;
-}
-
 // Config de cada card de KPI: de onde tirar o valor, como formatá-lo, ícone/
 // cor do badge, e em que sentido a variação é "boa" (define a cor do delta).
 const CONFIG_KPIS = [
@@ -423,7 +849,15 @@ const CONFIG_KPIS = [
 function formatarDeltaKpi(config, kpi) {
   const delta = config.tipoDelta === 'pontos' ? kpi.delta_pontos : kpi.delta_pct;
   if (delta === null || delta === undefined) {
-    return `<span class="kpi-card__delta-vs">Sem dado do mês anterior</span>`;
+    // Texto curto de propósito: com 6 cards numa grid "stretch", uma frase
+    // longa aqui (ex.: "Sem dado do mês anterior") quebra em várias linhas
+    // e infla a altura de TODOS os cards da fileira — em meses sem mês
+    // anterior pra comparar (caso comum de "poucos dados"), isso empurrava
+    // a faixa do topo inteira pra perto do limite da página e disparava um
+    // bug de paginação do Chromium (fragmento duplicado na página seguinte).
+    // Mesmo símbolo "—" já usado no resto do relatório pra ausência de dado
+    // (gauge de SLA, tabela de comparativo).
+    return `<span class="kpi-card__delta-vs">— sem comparativo</span>`;
   }
   const positivo = delta > 0;
   const negativo = delta < 0;
@@ -554,9 +988,306 @@ function gerarCapaLateral(dados) {
   `;
 }
 
-// Sprints 4 a 7 vão substituir esse placeholder restante, concatenando o
-// HTML das seções que faltam (gráficos de visão geral, distribuição,
-// indicadores operacionais, resumo inteligente, comparativo) dentro de
+// Paleta cíclica pras categorias (a mesma cor precisa aparecer no anel do
+// donut — gerarDonut, em graficos-svg.js — e na bolinha da legenda em HTML
+// aqui do lado, por isso a cor é decidida uma vez só, aqui).
+const PALETA_CATEGORIAS = ['#3B82F6', '#8B5CF6', '#22C55E', '#F59E0B', '#EF4444', '#8891A6'];
+
+// Cores e rótulos de prioridade — só 3 níveis (o sistema não tem "crítica",
+// mesma observação já feita sobre SLA_INTERVALO no topo de dados.js).
+const CORES_PRIORIDADE = { baixa: '#22C55E', media: '#F59E0B', alta: '#EF4444' };
+const LABELS_PRIORIDADE = { baixa: 'Baixa', media: 'Média', alta: 'Alta' };
+
+function gerarLegendaDistribuicao(itens) {
+  return itens.map((item) => `
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: ${item.cor};"></span>
+      <span class="distrib-legenda-nome">${item.nome}</span>
+      <span class="distrib-legenda-valor">${item.total} (${item.percentual}%)</span>
+    </div>
+  `).join('');
+}
+
+function gerarSecaoDistribuicao(dados) {
+  // Top 5 de verdade: o cabeçalho do card já promete "Top 5", então o
+  // restante das categorias (se houver) entra agrupado em "Outros" — em vez
+  // de simplesmente sumir ou, pior, encher a legenda/o donut com fatias
+  // demais (a paleta cíclica só tem 6 cores, então 7+ categorias sem esse
+  // corte já repetiriam cor entre fatias diferentes).
+  const categoriaOrdenada = [...dados.por_categoria].sort((a, b) => b.total - a.total);
+  const categoriaTop5 = categoriaOrdenada.slice(0, 5);
+  const categoriaResto = categoriaOrdenada.slice(5);
+  const totalResto = categoriaResto.reduce((s, c) => s + c.total, 0);
+  const categoriaFonte = totalResto > 0
+    ? [...categoriaTop5, { nome: 'Outros', total: totalResto, percentual: categoriaResto.reduce((s, c) => s + (c.percentual || 0), 0) }]
+    : categoriaTop5;
+
+  const categoriaItens = categoriaFonte.map((c, i) => ({
+    nome: c.nome,
+    total: c.total,
+    percentual: c.percentual,
+    cor: PALETA_CATEGORIAS[i % PALETA_CATEGORIAS.length],
+  }));
+  const totalCategoria = categoriaItens.reduce((s, c) => s + c.total, 0);
+
+  const prioridadeItens = dados.por_prioridade.map((p) => ({
+    nome: LABELS_PRIORIDADE[p.nome] || p.nome,
+    total: p.total,
+    percentual: p.percentual,
+    cor: CORES_PRIORIDADE[p.nome] || '#8891A6',
+  }));
+  const totalPrioridade = prioridadeItens.reduce((s, p) => s + p.total, 0);
+
+  const setorTop5 = dados.por_setor.slice(0, 5).map((s) => ({ nome: s.nome, total: s.total, percentual: s.percentual }));
+
+  return `
+    <section class="secao-distribuicao">
+      <div class="card distrib-card">
+        <div class="distrib-card__cabecalho">
+          <div class="distrib-card__titulo">CHAMADOS POR CATEGORIA</div>
+          <div class="distrib-card__filtro">Top 5</div>
+        </div>
+        <div class="distrib-card__corpo-donut">
+          <div class="distrib-card__donut">${gerarDonut(categoriaItens, totalCategoria)}</div>
+          <div class="distrib-card__legenda">${gerarLegendaDistribuicao(categoriaItens)}</div>
+        </div>
+      </div>
+
+      <div class="card distrib-card">
+        <div class="distrib-card__cabecalho">
+          <div class="distrib-card__titulo">CHAMADOS POR SETOR</div>
+          <div class="distrib-card__filtro">Top 5</div>
+        </div>
+        <div class="distrib-card__corpo-barras">${gerarBarrasHorizontais(setorTop5)}</div>
+      </div>
+
+      <div class="card distrib-card">
+        <div class="distrib-card__cabecalho">
+          <div class="distrib-card__titulo">CHAMADOS POR PRIORIDADE</div>
+        </div>
+        <div class="distrib-card__corpo-donut">
+          <div class="distrib-card__donut">${gerarDonut(prioridadeItens, totalPrioridade)}</div>
+          <div class="distrib-card__legenda">${gerarLegendaDistribuicao(prioridadeItens)}</div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+// Iniciais do nome pra usar como avatar de fallback quando o técnico não tem
+// foto_url (ex.: login não-Google, ou foto removida da conta).
+function iniciais(nomeCompleto) {
+  const partes = nomeCompleto.trim().split(/\s+/);
+  const primeira = partes[0]?.[0] || '';
+  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : '';
+  return (primeira + ultima).toUpperCase();
+}
+
+// Cor da variação de chamados por equipamento: pra equipamento problemático,
+// aumento é ruim (mesmo sentido do backlog) — mais chamados = mais problema.
+function formatarDeltaEquipamento(deltaPct) {
+  if (deltaPct === null || deltaPct === undefined) return '';
+  const seta = deltaPct > 0 ? '↑' : deltaPct < 0 ? '↓' : '→';
+  const classeCor = deltaPct === 0 ? '' : (deltaPct > 0 ? 'kpi-card__delta-seta--negativo' : 'kpi-card__delta-seta--positivo');
+  return `<span class="${classeCor}">${seta} ${Math.abs(deltaPct)}%</span>`;
+}
+
+// Quando a lista Top 5 vem incompleta (poucos dados no mês), as linhas não
+// devem só se espalhar pela altura garantida do card — o conteúdo em si
+// (ícone/avatar, fontes) precisa crescer, senão sobra espaço e o card parece
+// vazio mesmo depois do min-height. A escala cresce conforme a lista fica
+// mais incompleta, com teto em 1.6x pra não ficar desproporcional com 1 item só.
+function escalaPorQuantidade(qtd, maxItens = 5) {
+  const q = Math.max(qtd, 1);
+  const escala = Math.sqrt(maxItens / q);
+  return Math.min(1.6, Math.max(1, escala));
+}
+
+function gerarLinhasEquipamentos(equipamentos) {
+  const escala = escalaPorQuantidade(equipamentos.length);
+  return equipamentos.map((eq) => {
+    const nomeIcone = /impressora/i.test(eq.nome) ? 'printer' : 'monitor';
+    return `
+      <div class="indic-linha">
+        <div class="indic-linha__badge">${icone(nomeIcone, { cor: '#8891A6', tamanho: Math.round(15 * escala) })}</div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">${eq.nome}</div>
+          <div class="indic-linha__nome-secundario">${eq.marca || ''}</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">${eq.total}</div>
+          <div class="indic-linha__legenda">${formatarDeltaEquipamento(eq.delta_pct)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function gerarLinhasTecnicos(tecnicos) {
+  const escala = escalaPorQuantidade(tecnicos.length);
+  return tecnicos.map((t) => {
+    const avatar = t.foto_url
+      ? `<img class="indic-linha__avatar" src="${t.foto_url}" alt="" />`
+      : `<div class="indic-linha__avatar-iniciais">${iniciais(t.nome)}</div>`;
+    return `
+      <div class="indic-linha">
+        ${avatar}
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">${t.nome}</div>
+          <div class="indic-linha__nome-secundario">${t.resolvidos} resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">${t.sla_pct !== null ? `${t.sla_pct}%` : '—'}</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function gerarListaSlaPrioridade(slaPorPrioridade) {
+  return `
+    <div class="sla-prioridade-lista">
+      ${slaPorPrioridade.map((s) => `
+        <div class="sla-prioridade-item">
+          <span class="sla-prioridade-nome">
+            <span class="sla-prioridade-dot" style="background: ${CORES_PRIORIDADE[s.prioridade] || '#8891A6'}; display:inline-block; margin-right:4px; vertical-align:middle;"></span>${LABELS_PRIORIDADE[s.prioridade] || s.prioridade}
+          </span>
+          <span class="sla-prioridade-fracao">${s.pct !== null ? `${s.pct}%` : '—'} (${s.dentro_sla}/${s.total})</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function gerarSecaoIndicadores(dados) {
+  return `
+    <section class="secao-indicadores">
+      <div class="card indic-card">
+        <div class="indic-card__cabecalho">
+          <div class="indic-card__titulo">EQUIPAMENTOS MAIS PROBLEMÁTICOS</div>
+          <div class="indic-card__filtro">Top 5</div>
+        </div>
+        <div class="indic-card__linhas" style="--escala-itens: ${escalaPorQuantidade(dados.equipamentos.length)}">${gerarLinhasEquipamentos(dados.equipamentos)}</div>
+      </div>
+
+      <div class="card indic-card">
+        <div class="indic-card__cabecalho">
+          <div class="indic-card__titulo">TÉCNICOS — DESEMPENHO</div>
+          <div class="indic-card__filtro">Top 5</div>
+        </div>
+        <div class="indic-card__linhas" style="--escala-itens: ${escalaPorQuantidade(dados.tecnicos.length)}">${gerarLinhasTecnicos(dados.tecnicos)}</div>
+      </div>
+
+      <div class="card indic-card">
+        <div class="indic-card__cabecalho">
+          <div class="indic-card__titulo">SLA POR PRIORIDADE</div>
+        </div>
+        <div class="indic-card__gauge">
+          <div class="indic-card__gauge-anel">${gerarGaugeSla(dados.sla_geral_pct)}</div>
+          ${gerarListaSlaPrioridade(dados.sla_por_prioridade)}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+// Config de cada linha da tabela de comparativo: reaproveita as mesmas chaves
+// de dados.kpis já usadas na grade de KPIs (seção 2), mas exibindo o valor
+// bruto do mês anterior lado a lado — não só o delta.
+const CONFIG_COMPARATIVO = [
+  { chave: 'total_chamados', label: 'Total de chamados', tipoDelta: 'pct', formatar: (v) => v ?? '—' },
+  { chave: 'resolvidos', label: 'Resolvidos', tipoDelta: 'pct', formatar: (v) => v ?? '—' },
+  { chave: 'tempo_medio_resolucao_seg', label: 'Tempo médio de resolução', tipoDelta: 'pct', formatar: formatarDuracao },
+  { chave: 'tempo_medio_1a_resposta_seg', label: 'Tempo médio 1ª resposta', tipoDelta: 'pct', formatar: formatarDuracao },
+  { chave: 'sla_cumprido_pct', label: 'SLA cumprido', tipoDelta: 'pontos', formatar: (v) => (v !== null && v !== undefined ? `${v}%` : '—') },
+  { chave: 'backlog', label: 'Backlog', tipoDelta: 'pct', formatar: (v) => v ?? '—' },
+];
+
+function gerarSecaoResumoInteligente(dados) {
+  const itens = gerarResumoInteligente(dados);
+  const itensHtml = itens.map((item) => `
+    <div class="resumo-inteligente__item">
+      ${icone(item.icone, { cor: '#3B82F6', tamanho: 15 })}
+      <div class="resumo-inteligente__item-texto">${item.texto}</div>
+    </div>
+  `).join('');
+
+  return `
+    <section class="card resumo-inteligente">
+      <div class="resumo-inteligente__titulo">${icone('clipboard-search', { cor: '#3B82F6', tamanho: 16 })} RESUMO EXECUTIVO (ANÁLISE AUTOMÁTICA)</div>
+      <div class="resumo-inteligente__lista">${itensHtml}</div>
+    </section>
+  `;
+}
+
+// Formata a variação de uma linha do comparativo — mesma ideia de
+// formatarDeltaKpi (seta + cor conforme sentido bom/ruim), mas sem o "vs. mês
+// anterior" (já é óbvio pelo contexto da tabela) e com o valor sempre visível
+// mesmo quando não há dado (mostra "—" em vez de esconder a célula).
+function formatarVariacaoComparativo(config, kpi) {
+  const delta = config.tipoDelta === 'pontos' ? kpi.delta_pontos : kpi.delta_pct;
+  if (delta === null || delta === undefined) return '—';
+  const positivo = delta > 0;
+  const negativo = delta < 0;
+  // Mesmo critério de "bom" usado na grade de KPIs (ver CONFIG_KPIS/bomSe).
+  const configKpi = CONFIG_KPIS.find((c) => c.chave === config.chave);
+  const aumentouOuIgual = delta >= 0;
+  const ehBom = configKpi.bomSe === 'aumento' ? aumentouOuIgual : !aumentouOuIgual || delta === 0;
+  const classeCor = delta === 0 ? '' : (ehBom ? 'comparativo-tabela__variacao--positivo' : 'comparativo-tabela__variacao--negativo');
+  const seta = positivo ? '↑' : negativo ? '↓' : '→';
+  const sufixo = config.tipoDelta === 'pontos' ? ' p.p.' : '%';
+  return `<span class="${classeCor}">${seta} ${Math.abs(delta)}${sufixo}</span>`;
+}
+
+function gerarSecaoComparativo(dados) {
+  const linhas = CONFIG_COMPARATIVO.map((config) => {
+    const kpi = dados.kpis[config.chave];
+    return `
+      <tr>
+        <td>${config.label}</td>
+        <td>${config.formatar(kpi.valor)}</td>
+        <td>${config.formatar(kpi.valor_anterior)}</td>
+        <td>${formatarVariacaoComparativo(config, kpi)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <section class="card comparativo-card">
+      <div class="comparativo-card__cabecalho">
+        <div class="comparativo-card__titulo">COMPARATIVOS</div>
+        <div class="comparativo-card__filtro">Mês</div>
+      </div>
+      <table class="comparativo-tabela">
+        <thead>
+          <tr>
+            <th>Métrica</th>
+            <th>${dados.periodo.mes_curto_atual}</th>
+            <th>${dados.periodo.mes_curto_anterior}</th>
+            <th>Variação</th>
+          </tr>
+        </thead>
+        <tbody>${linhas}</tbody>
+      </table>
+    </section>
+  `;
+}
+
+function gerarRodape() {
+  // Só a versão "estática" do rodapé, útil pra conferir visualmente o HTML
+  // isolado no navegador. No PDF de verdade (Sprint 8), a repetição em toda
+  // página fica a cargo do footerTemplate nativo do Puppeteer — mais
+  // confiável do que tentar repetir isso via CSS de impressão.
+  return `
+    <footer class="rodape-relatorio">
+      Relatório gerado pelo sistema Chama · Câmara Municipal de Itajubá
+    </footer>
+  `;
+}
+
+// Sprint 7 vai substituir esse placeholder restante, concatenando o HTML das
+// seções que faltam (resumo inteligente, comparativo) dentro de
 // <main class="conteudo">, junto com as seções já implementadas acima.
 function gerarConteudoTopo(dados) {
   return `
@@ -572,11 +1303,13 @@ function gerarConteudo(dados) {
   return `
     <main class="conteudo">
       ${gerarSecaoVisaoGeral(dados)}
-      <div class="placeholder-secoes">
-        Conteúdo restante do relatório (Distribuição, Indicadores
-        Operacionais, Resumo Inteligente, Comparativos) — implementado nas
-        Sprints 5 a 7.
-      </div>
+      ${gerarSecaoDistribuicao(dados)}
+      ${gerarSecaoIndicadores(dados)}
+      <section class="secao-final">
+        ${gerarSecaoResumoInteligente(dados)}
+        ${gerarSecaoComparativo(dados)}
+      </section>
+      ${gerarRodape()}
     </main>
   `;
 }

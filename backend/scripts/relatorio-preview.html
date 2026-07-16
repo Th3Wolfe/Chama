@@ -42,6 +42,7 @@
     display: grid;
     grid-template-columns: 220px 1fr;
     border-bottom: 1px solid var(--color-border);
+    break-inside: avoid;
   }
 
   .topo__conteudo {
@@ -154,14 +155,7 @@
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-  }
-
-  .placeholder-secoes {
-    color: var(--color-text-muted);
-    font-size: 12px;
-    padding: 20px;
-    border: 1px dashed var(--color-border);
-    border-radius: var(--radius-md);
+    break-inside: avoid;
   }
 
   /* ---------- Resumo executivo (seção 2, texto introdutório) ---------- */
@@ -361,6 +355,449 @@
   .grafico-card__corpo svg.heatmap-svg {
     height: 100%;
   }
+
+  /* ---------- Distribuição: categoria / setor / prioridade (seção 6) ---------- */
+  .secao-distribuicao {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .distrib-card {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .distrib-card__cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .distrib-card__titulo {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-text);
+  }
+
+  .distrib-card__filtro {
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  /* Cresce pra ocupar a altura que sobrar no card (o card em si estica pra
+     acompanhar a altura dos vizinhos — ver .secao-distribuicao) e centraliza
+     o conteúdo verticalmente nesse espaço, em vez de deixar tudo grudado no
+     topo com uma sobra de espaço em branco embaixo. */
+  .distrib-card__corpo-donut {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* Diâmetro do anel acompanha a altura disponível (até um teto, pra não
+     ficar gigante em cards muito altos com poucos itens na legenda). O
+     max-width é igualmente necessário: sem ele, em cards altos (ex.: ao
+     lado do card de setor com 5 linhas) o donut cresce livre pela altura e,
+     por causa do aspect-ratio 1:1, engole quase toda a largura do card,
+     deixando a legenda espremida a ponto de truncar até o primeiro caractere. */
+  .distrib-card__donut {
+    flex: 0 0 auto;
+    height: 100%;
+    max-height: 180px;
+    max-width: 42%;
+    aspect-ratio: 1 / 1;
+  }
+
+  .distrib-card__donut svg {
+    display: block;
+    height: 100%;
+    width: auto;
+  }
+
+  .distrib-card__legenda {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 96px;
+  }
+
+  .distrib-legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    color: var(--color-text-muted);
+  }
+
+  .distrib-legenda-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .distrib-legenda-nome {
+    color: var(--color-text);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .distrib-legenda-valor {
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  /* Mesma lógica do heatmap: o SVG das barras estica pra preencher a altura
+     do card (linhas mais altas quando sobra espaço, mais compactas quando
+     tem mais setores) em vez de ficar com um bloco fixo colado no topo. */
+  .distrib-card__corpo-barras {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .distrib-card__corpo-barras svg.barras-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ---------- Indicadores operacionais: equipamentos / técnicos / SLA (seção 7) ---------- */
+  .secao-indicadores {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: minmax(200px, auto);
+    gap: 20px;
+  }
+
+  .indic-card {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .indic-card__cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .indic-card__titulo {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-text);
+  }
+
+  .indic-card__filtro {
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  /* Corpo das tabelas cresce e distribui as linhas uniformemente pela altura
+     disponível — mesmo princípio dos cards de distribuição. */
+  .indic-card__linhas {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+
+  .indic-linha {
+    display: flex;
+    align-items: center;
+    gap: calc(10px * var(--escala-itens, 1));
+  }
+
+  .indic-linha__badge {
+    width: calc(28px * var(--escala-itens, 1));
+    height: calc(28px * var(--escala-itens, 1));
+    border-radius: 8px;
+    background: #1B2338;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .indic-linha__avatar {
+    width: calc(28px * var(--escala-itens, 1));
+    height: calc(28px * var(--escala-itens, 1));
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+    background: #1B2338;
+  }
+
+  .indic-linha__avatar-iniciais {
+    width: calc(28px * var(--escala-itens, 1));
+    height: calc(28px * var(--escala-itens, 1));
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #1B2338;
+    color: var(--color-text-muted);
+    font-size: calc(10px * var(--escala-itens, 1));
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .indic-linha__nome {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .indic-linha__nome-principal {
+    font-size: calc(10.5px * var(--escala-itens, 1));
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .indic-linha__nome-secundario {
+    font-size: calc(9px * var(--escala-itens, 1));
+    color: var(--color-text-muted);
+  }
+
+  .indic-linha__metrica {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .indic-linha__valor {
+    font-size: calc(10.5px * var(--escala-itens, 1));
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  .indic-linha__legenda {
+    font-size: calc(9px * var(--escala-itens, 1));
+    color: var(--color-text-muted);
+  }
+
+  .indic-card__gauge {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .indic-card__gauge-anel {
+    flex: 0 0 auto;
+    height: auto;
+    width: 100%;
+    max-height: 120px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .indic-card__gauge-anel svg {
+    display: block;
+    height: 100%;
+    width: auto;
+    margin: 0 auto;
+  }
+
+  /* Linha de badges compactos abaixo do gauge (uma coluna por prioridade),
+     em vez de lista vertical — usa a largura cheia do card, que é bem mais
+     espaço do que a sobra ao lado de um gauge de 150px. */
+  .sla-prioridade-lista {
+    display: flex;
+    width: 100%;
+    gap: 6px;
+  }
+
+  .sla-prioridade-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sla-prioridade-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .sla-prioridade-nome {
+    color: var(--color-text);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .sla-prioridade-fracao {
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* ---------- Resumo Executivo Inteligente + Comparativo (seções 8 e 9) ---------- */
+  .secao-final {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+    min-height: 260px;
+  }
+
+  .resumo-inteligente {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .resumo-inteligente__titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    margin-bottom: 14px;
+  }
+
+  .resumo-inteligente__titulo svg {
+    flex-shrink: 0;
+  }
+
+  .resumo-inteligente__lista {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 10px;
+  }
+
+  .resumo-inteligente__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .resumo-inteligente__item svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .resumo-inteligente__item-texto {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  .comparativo-card {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .comparativo-card__cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .comparativo-card__titulo {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+  }
+
+  .comparativo-card__filtro {
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  .comparativo-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .comparativo-tabela th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .comparativo-tabela th:not(:first-child),
+  .comparativo-tabela td:not(:first-child) {
+    text-align: right;
+  }
+
+  .comparativo-tabela td {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .comparativo-tabela tr:last-child td {
+    border-bottom: none;
+  }
+
+  .comparativo-tabela__variacao--positivo { color: var(--color-success); }
+  .comparativo-tabela__variacao--negativo { color: var(--color-danger); }
+
+  /* ---------- Rodapé ---------- */
+  .rodape-relatorio {
+    text-align: center;
+    font-size: 9.5px;
+    color: var(--color-text-muted);
+    padding-top: 12px;
+  }
+
+  /* No PDF gerado pelo Puppeteer (Sprint 8) o rodapé repetido em cada página
+     já vem do footerTemplate nativo (page.pdf), então o rodapé estático do
+     fim do documento é escondido no media "print" pra não duplicar. Ele
+     continua visível ao abrir o HTML isolado direto no navegador (modo
+     "screen"), que é o que o critério de aceite da Sprint 2 pedia. */
+  @media print {
+    .rodape-relatorio { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -394,7 +831,7 @@
 
       <div class="capa__rodape">
         <div class="capa__rodape-label">Relatório gerado em</div>
-        <div>14/07/2026 às 21:33</div>
+        <div>15/07/2026 às 21:28</div>
       </div>
     </aside>
   
@@ -416,8 +853,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         </div>
         <div class="kpi-card__label">Total de chamados</div>
-        <div class="kpi-card__valor">11</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-vs">Sem dado do mês anterior</span></div>
+        <div class="kpi-card__valor">62</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↓ 43%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -425,8 +862,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
         </div>
         <div class="kpi-card__label">SLA cumprido</div>
-        <div class="kpi-card__valor">82%</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-vs">Sem dado do mês anterior</span></div>
+        <div class="kpi-card__valor">73%</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↓ 11 p.p.</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -434,8 +871,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
         </div>
         <div class="kpi-card__label">Tempo médio de resolução</div>
-        <div class="kpi-card__valor">15h 8m</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-vs">Sem dado do mês anterior</span></div>
+        <div class="kpi-card__valor">1d 6h</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↑ 65%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -443,8 +880,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 4.9 16.5L21 21l-1.2-3.9A9 9 0 0 0 12 3z"/></svg>
         </div>
         <div class="kpi-card__label">Tempo médio 1ª resposta</div>
-        <div class="kpi-card__valor">52m</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-vs">Sem dado do mês anterior</span></div>
+        <div class="kpi-card__valor">9h 26m</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↑ 43%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -452,8 +889,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>
         </div>
         <div class="kpi-card__label">Resolvidos</div>
-        <div class="kpi-card__valor">11</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-vs">Sem dado do mês anterior</span></div>
+        <div class="kpi-card__valor">45</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↓ 51%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -461,8 +898,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9.5 16H2.5L12 4z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.8" fill="currentColor" stroke="none"/></svg>
         </div>
         <div class="kpi-card__label">Backlog</div>
-        <div class="kpi-card__valor">0</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-vs">Sem dado do mês anterior</span></div>
+        <div class="kpi-card__valor">17</div>
+        <div class="kpi-card__delta"><span class="">→ 0%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     </section>
       
@@ -470,13 +907,23 @@
       <div class="destaques__titulo">DESTAQUES DO PERÍODO</div>
       <div class="destaques__grade">
     <div class="destaque-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>
+      <div class="destaque-item__texto">Os chamados caíram 43% em relação ao mês anterior.</div>
+    </div>
+  <div class="destaque-divisor"></div>
+    <div class="destaque-item">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
-      <div class="destaque-item__texto">Iago Martins recebeu 82% dos chamados do mês.</div>
+      <div class="destaque-item__texto">Iago Martins recebeu 29% dos chamados do mês.</div>
+    </div>
+  <div class="destaque-divisor"></div>
+    <div class="destaque-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>
+      <div class="destaque-item__texto">O setor Recursos Humanos apresentou aumento de 22% nos incidentes.</div>
     </div>
   <div class="destaque-divisor"></div>
     <div class="destaque-item">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8" rx="1.5"/><path d="M7 16h10v5H7z"/></svg>
-      <div class="destaque-item__texto">Impressora respondeu por 36% dos chamados.</div>
+      <div class="destaque-item__texto">Impressora respondeu por 21% dos chamados.</div>
     </div>
   </div>
     </section>
@@ -525,19 +972,19 @@
       <text x="26" y="17" text-anchor="end" font-size="8.5" fill="#8891A6">10</text>
     
 
-    <path d="M 32.0,234.0 L 32.0,234.0 L 50.5,234.0 L 68.9,234.0 L 87.4,234.0 L 105.9,234.0 L 124.3,234.0 L 142.8,234.0 L 161.3,234.0 L 179.7,80.0 L 198.2,212.0 L 216.7,212.0 L 235.1,234.0 L 253.6,212.0 L 272.1,212.0 L 290.5,234.0 L 309.0,234.0 L 327.5,234.0 L 345.9,234.0 L 364.4,234.0 L 382.9,234.0 L 401.3,234.0 L 419.8,234.0 L 438.3,234.0 L 456.7,234.0 L 475.2,234.0 L 493.7,234.0 L 512.1,234.0 L 530.6,234.0 L 549.1,234.0 L 567.5,234.0 L 586.0,234.0 L 586.0,234.0 Z" fill="url(#grad-area-linha)" stroke="none" />
-    <path d="M 32.0,234.0 L 50.5,234.0 L 68.9,234.0 L 87.4,234.0 L 105.9,234.0 L 124.3,234.0 L 142.8,234.0 L 161.3,234.0 L 179.7,212.0 L 198.2,209.8 L 216.7,205.4 L 235.1,205.4 L 253.6,203.2 L 272.1,198.8 L 290.5,198.8 L 309.0,220.8 L 327.5,225.2 L 345.9,227.4 L 364.4,227.4 L 382.9,231.8 L 401.3,234.0 L 419.8,234.0 L 438.3,234.0 L 456.7,234.0 L 475.2,234.0 L 493.7,234.0 L 512.1,234.0 L 530.6,234.0 L 549.1,234.0 L 567.5,234.0 L 586.0,234.0" fill="none" stroke="#8891A6" stroke-width="1.4" stroke-dasharray="4 3" />
-    <path d="M 32.0,234.0 L 50.5,234.0 L 68.9,234.0 L 87.4,234.0 L 105.9,234.0 L 124.3,234.0 L 142.8,234.0 L 161.3,234.0 L 179.7,80.0 L 198.2,212.0 L 216.7,212.0 L 235.1,234.0 L 253.6,212.0 L 272.1,212.0 L 290.5,234.0 L 309.0,234.0 L 327.5,234.0 L 345.9,234.0 L 364.4,234.0 L 382.9,234.0 L 401.3,234.0 L 419.8,234.0 L 438.3,234.0 L 456.7,234.0 L 475.2,234.0 L 493.7,234.0 L 512.1,234.0 L 530.6,234.0 L 549.1,234.0 L 567.5,234.0 L 586.0,234.0" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+    <path d="M 32.0,234.0 L 32.0,58.0 L 50.5,168.0 L 68.9,146.0 L 87.4,190.0 L 105.9,212.0 L 124.3,168.0 L 142.8,102.0 L 161.3,212.0 L 179.7,14.0 L 198.2,36.0 L 216.7,212.0 L 235.1,234.0 L 253.6,80.0 L 272.1,168.0 L 290.5,146.0 L 309.0,234.0 L 327.5,234.0 L 345.9,234.0 L 364.4,234.0 L 382.9,234.0 L 401.3,234.0 L 419.8,234.0 L 438.3,234.0 L 456.7,234.0 L 475.2,234.0 L 493.7,234.0 L 512.1,234.0 L 530.6,234.0 L 549.1,234.0 L 567.5,234.0 L 586.0,234.0 L 586.0,234.0 Z" fill="url(#grad-area-linha)" stroke="none" />
+    <path d="M 32.0,58.0 L 50.5,113.0 L 68.9,124.0 L 87.4,139.4 L 105.9,154.8 L 124.3,157.0 L 142.8,148.2 L 161.3,170.2 L 179.7,148.2 L 198.2,132.8 L 216.7,137.2 L 235.1,139.4 L 253.6,126.2 L 272.1,137.2 L 290.5,126.2 L 309.0,159.2 L 327.5,187.8 L 345.9,190.0 L 364.4,190.0 L 382.9,212.0 L 401.3,220.8 L 419.8,234.0 L 438.3,234.0 L 456.7,234.0 L 475.2,234.0 L 493.7,234.0 L 512.1,234.0 L 530.6,234.0 L 549.1,234.0 L 567.5,234.0 L 586.0,234.0" fill="none" stroke="#8891A6" stroke-width="1.4" stroke-dasharray="4 3" />
+    <path d="M 32.0,58.0 L 50.5,168.0 L 68.9,146.0 L 87.4,190.0 L 105.9,212.0 L 124.3,168.0 L 142.8,102.0 L 161.3,212.0 L 179.7,14.0 L 198.2,36.0 L 216.7,212.0 L 235.1,234.0 L 253.6,80.0 L 272.1,168.0 L 290.5,146.0 L 309.0,234.0 L 327.5,234.0 L 345.9,234.0 L 364.4,234.0 L 382.9,234.0 L 401.3,234.0 L 419.8,234.0 L 438.3,234.0 L 456.7,234.0 L 475.2,234.0 L 493.7,234.0 L 512.1,234.0 L 530.6,234.0 L 549.1,234.0 L 567.5,234.0 L 586.0,234.0" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
 
-    <circle cx="32.0" cy="234.0" r="2" fill="#3B82F6" /><circle cx="50.5" cy="234.0" r="2" fill="#3B82F6" /><circle cx="68.9" cy="234.0" r="2" fill="#3B82F6" /><circle cx="87.4" cy="234.0" r="2" fill="#3B82F6" /><circle cx="105.9" cy="234.0" r="2" fill="#3B82F6" /><circle cx="124.3" cy="234.0" r="2" fill="#3B82F6" /><circle cx="142.8" cy="234.0" r="2" fill="#3B82F6" /><circle cx="161.3" cy="234.0" r="2" fill="#3B82F6" /><circle cx="179.7" cy="80.0" r="2" fill="#3B82F6" /><circle cx="198.2" cy="212.0" r="2" fill="#3B82F6" /><circle cx="216.7" cy="212.0" r="2" fill="#3B82F6" /><circle cx="235.1" cy="234.0" r="2" fill="#3B82F6" /><circle cx="253.6" cy="212.0" r="2" fill="#3B82F6" /><circle cx="272.1" cy="212.0" r="2" fill="#3B82F6" /><circle cx="290.5" cy="234.0" r="2" fill="#3B82F6" /><circle cx="309.0" cy="234.0" r="2" fill="#3B82F6" /><circle cx="327.5" cy="234.0" r="2" fill="#3B82F6" /><circle cx="345.9" cy="234.0" r="2" fill="#3B82F6" /><circle cx="364.4" cy="234.0" r="2" fill="#3B82F6" /><circle cx="382.9" cy="234.0" r="2" fill="#3B82F6" /><circle cx="401.3" cy="234.0" r="2" fill="#3B82F6" /><circle cx="419.8" cy="234.0" r="2" fill="#3B82F6" /><circle cx="438.3" cy="234.0" r="2" fill="#3B82F6" /><circle cx="456.7" cy="234.0" r="2" fill="#3B82F6" /><circle cx="475.2" cy="234.0" r="2" fill="#3B82F6" /><circle cx="493.7" cy="234.0" r="2" fill="#3B82F6" /><circle cx="512.1" cy="234.0" r="2" fill="#3B82F6" /><circle cx="530.6" cy="234.0" r="2" fill="#3B82F6" /><circle cx="549.1" cy="234.0" r="2" fill="#3B82F6" /><circle cx="567.5" cy="234.0" r="2" fill="#3B82F6" /><circle cx="586.0" cy="234.0" r="2" fill="#3B82F6" />
+    <circle cx="32.0" cy="58.0" r="2" fill="#3B82F6" /><circle cx="50.5" cy="168.0" r="2" fill="#3B82F6" /><circle cx="68.9" cy="146.0" r="2" fill="#3B82F6" /><circle cx="87.4" cy="190.0" r="2" fill="#3B82F6" /><circle cx="105.9" cy="212.0" r="2" fill="#3B82F6" /><circle cx="124.3" cy="168.0" r="2" fill="#3B82F6" /><circle cx="142.8" cy="102.0" r="2" fill="#3B82F6" /><circle cx="161.3" cy="212.0" r="2" fill="#3B82F6" /><circle cx="179.7" cy="14.0" r="2" fill="#3B82F6" /><circle cx="198.2" cy="36.0" r="2" fill="#3B82F6" /><circle cx="216.7" cy="212.0" r="2" fill="#3B82F6" /><circle cx="235.1" cy="234.0" r="2" fill="#3B82F6" /><circle cx="253.6" cy="80.0" r="2" fill="#3B82F6" /><circle cx="272.1" cy="168.0" r="2" fill="#3B82F6" /><circle cx="290.5" cy="146.0" r="2" fill="#3B82F6" /><circle cx="309.0" cy="234.0" r="2" fill="#3B82F6" /><circle cx="327.5" cy="234.0" r="2" fill="#3B82F6" /><circle cx="345.9" cy="234.0" r="2" fill="#3B82F6" /><circle cx="364.4" cy="234.0" r="2" fill="#3B82F6" /><circle cx="382.9" cy="234.0" r="2" fill="#3B82F6" /><circle cx="401.3" cy="234.0" r="2" fill="#3B82F6" /><circle cx="419.8" cy="234.0" r="2" fill="#3B82F6" /><circle cx="438.3" cy="234.0" r="2" fill="#3B82F6" /><circle cx="456.7" cy="234.0" r="2" fill="#3B82F6" /><circle cx="475.2" cy="234.0" r="2" fill="#3B82F6" /><circle cx="493.7" cy="234.0" r="2" fill="#3B82F6" /><circle cx="512.1" cy="234.0" r="2" fill="#3B82F6" /><circle cx="530.6" cy="234.0" r="2" fill="#3B82F6" /><circle cx="549.1" cy="234.0" r="2" fill="#3B82F6" /><circle cx="567.5" cy="234.0" r="2" fill="#3B82F6" /><circle cx="586.0" cy="234.0" r="2" fill="#3B82F6" />
 
     <text x="32.0" y="254" text-anchor="middle" font-size="8.5" fill="#8891A6">01/07</text><text x="142.8" y="254" text-anchor="middle" font-size="8.5" fill="#8891A6">07/07</text><text x="253.6" y="254" text-anchor="middle" font-size="8.5" fill="#8891A6">13/07</text><text x="364.4" y="254" text-anchor="middle" font-size="8.5" fill="#8891A6">19/07</text><text x="475.2" y="254" text-anchor="middle" font-size="8.5" fill="#8891A6">25/07</text><text x="586.0" y="254" text-anchor="middle" font-size="8.5" fill="#8891A6">31/07</text>
 
     
-      <circle cx="179.7" cy="80.0" r="4" fill="#0A0E18" stroke="#3B82F6" stroke-width="2" />
-      <rect x="131.7" y="34.0" width="96" height="34" rx="6" fill="#1B2338" stroke="#3B82F6" stroke-width="1" />
-      <text x="179.7" y="48.0" text-anchor="middle" font-size="8.5" font-weight="700" fill="#EAEDF5">09/07/2026</text>
-      <text x="179.7" y="60.0" text-anchor="middle" font-size="8.5" fill="#8891A6">7 chamados</text>
+      <circle cx="179.7" cy="14.0" r="4" fill="#0A0E18" stroke="#3B82F6" stroke-width="2" />
+      <rect x="131.7" y="26.0" width="96" height="34" rx="6" fill="#1B2338" stroke="#3B82F6" stroke-width="1" />
+      <text x="179.7" y="40.0" text-anchor="middle" font-size="8.5" font-weight="700" fill="#EAEDF5">09/07/2026</text>
+      <text x="179.7" y="52.0" text-anchor="middle" font-size="8.5" fill="#8891A6">10 chamados</text>
     
   </svg></div>
       </div>
@@ -561,7 +1008,7 @@
 
     <text x="34.0" y="16" text-anchor="middle" font-size="9" fill="#8891A6">00h</text><text x="103.9" y="16" text-anchor="middle" font-size="9" fill="#8891A6">04h</text><text x="173.7" y="16" text-anchor="middle" font-size="9" fill="#8891A6">08h</text><text x="243.6" y="16" text-anchor="middle" font-size="9" fill="#8891A6">12h</text><text x="313.5" y="16" text-anchor="middle" font-size="9" fill="#8891A6">16h</text><text x="383.3" y="16" text-anchor="middle" font-size="9" fill="#8891A6">20h</text>
     <text x="26" y="36.1" text-anchor="end" font-size="9" fill="#8891A6">Seg</text><text x="26" y="53.6" text-anchor="end" font-size="9" fill="#8891A6">Ter</text><text x="26" y="71.1" text-anchor="end" font-size="9" fill="#8891A6">Qua</text><text x="26" y="88.5" text-anchor="end" font-size="9" fill="#8891A6">Qui</text><text x="26" y="106.0" text-anchor="end" font-size="9" fill="#8891A6">Sex</text><text x="26" y="123.5" text-anchor="end" font-size="9" fill="#8891A6">Sáb</text><text x="26" y="140.9" text-anchor="end" font-size="9" fill="#8891A6">Dom</text>
-    <rect x="34.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="34.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="51.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 69)" /><rect x="68.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="86.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="103.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="138.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="156.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="173.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="191.2" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="208.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="226.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="243.6" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="261.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="278.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="296.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="313.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="330.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="348.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(28, 27, 79)" /><rect x="365.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="383.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="400.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="418.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="34.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="51.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(28, 27, 79)" /><rect x="68.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="86.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="103.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="138.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="156.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="173.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="191.2" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="208.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="226.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="243.6" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="261.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="278.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="296.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="313.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="330.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="348.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 69)" /><rect x="365.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="383.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="400.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="418.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 70)" /><rect x="34.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 33, 100)" /><rect x="51.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(107, 43, 113)" /><rect x="68.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 33, 100)" /><rect x="86.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 70)" /><rect x="103.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="138.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="156.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="173.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="191.2" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="208.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="226.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 69)" /><rect x="243.6" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="261.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="278.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="296.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="313.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="330.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="348.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="365.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="383.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="400.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="418.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(27, 27, 77)" /><rect x="34.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(114, 45, 110)" /><rect x="51.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(254, 158, 77)" /><rect x="68.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(114, 45, 110)" /><rect x="86.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(27, 27, 77)" /><rect x="103.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="138.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="156.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="173.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="191.2" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="208.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="226.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(28, 27, 79)" /><rect x="243.6" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="261.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="278.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="296.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="313.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="330.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="348.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="365.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 69)" /><rect x="383.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="400.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="418.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 25, 68)" /><rect x="34.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(46, 31, 93)" /><rect x="51.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(74, 37, 127)" /><rect x="68.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(46, 31, 93)" /><rect x="86.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 25, 68)" /><rect x="103.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="138.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="156.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="173.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="191.2" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="208.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="226.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 69)" /><rect x="243.6" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 67)" /><rect x="261.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 67)" /><rect x="278.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 69)" /><rect x="296.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="313.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="330.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="348.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="365.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(28, 27, 79)" /><rect x="383.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="400.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="418.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="34.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="51.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="68.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="86.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="103.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="138.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="156.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="173.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="191.2" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="208.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="226.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="243.6" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 64)" /><rect x="261.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(27, 27, 77)" /><rect x="278.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(39, 30, 88)" /><rect x="296.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(27, 27, 77)" /><rect x="313.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 64)" /><rect x="330.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="348.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="365.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 69)" /><rect x="383.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="400.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="418.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="34.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="51.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="68.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="86.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="103.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="138.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="156.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="173.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="191.2" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="208.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="226.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="243.6" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="261.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="278.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="296.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="313.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="330.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="348.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 69)" /><rect x="365.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="383.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="400.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="418.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" />
+    <rect x="34.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 60)" /><rect x="34.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 63)" /><rect x="51.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 66)" /><rect x="68.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 63)" /><rect x="86.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 60)" /><rect x="103.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 60)" /><rect x="121.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 70)" /><rect x="138.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(45, 31, 93)" /><rect x="156.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(79, 38, 125)" /><rect x="173.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(73, 37, 126)" /><rect x="191.2" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(57, 33, 106)" /><rect x="208.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(46, 31, 93)" /><rect x="226.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(39, 29, 88)" /><rect x="243.6" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(44, 31, 92)" /><rect x="261.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(51, 32, 98)" /><rect x="278.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 34, 107)" /><rect x="296.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(57, 33, 106)" /><rect x="313.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 28, 84)" /><rect x="330.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 73)" /><rect x="348.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 73)" /><rect x="365.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 68)" /><rect x="383.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="400.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="418.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="34.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 68)" /><rect x="51.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 73)" /><rect x="68.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 68)" /><rect x="86.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="103.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="121.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 73)" /><rect x="138.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(48, 32, 96)" /><rect x="156.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(74, 37, 126)" /><rect x="173.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(75, 37, 126)" /><rect x="191.2" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(66, 35, 116)" /><rect x="208.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(59, 34, 109)" /><rect x="226.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(65, 35, 116)" /><rect x="243.6" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(110, 44, 111)" /><rect x="261.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(130, 48, 102)" /><rect x="278.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(123, 47, 106)" /><rect x="296.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(90, 40, 120)" /><rect x="313.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(51, 32, 98)" /><rect x="330.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(27, 27, 77)" /><rect x="348.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 25, 68)" /><rect x="365.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 63)" /><rect x="383.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 60)" /><rect x="400.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="418.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 66)" /><rect x="34.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(39, 29, 88)" /><rect x="51.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(61, 34, 111)" /><rect x="68.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(39, 29, 88)" /><rect x="86.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 66)" /><rect x="103.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 60)" /><rect x="121.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 68)" /><rect x="138.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 28, 84)" /><rect x="156.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(51, 32, 98)" /><rect x="173.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 33, 103)" /><rect x="191.2" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(60, 34, 110)" /><rect x="208.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(66, 35, 117)" /><rect x="226.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(131, 48, 102)" /><rect x="243.6" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(238, 130, 74)" /><rect x="261.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(239, 132, 75)" /><rect x="278.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(132, 48, 101)" /><rect x="296.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(69, 36, 121)" /><rect x="313.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 33, 102)" /><rect x="330.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(28, 27, 79)" /><rect x="348.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 63)" /><rect x="365.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="383.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="400.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="418.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 72)" /><rect x="34.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(63, 35, 113)" /><rect x="51.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(158, 60, 92)" /><rect x="68.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(63, 35, 113)" /><rect x="86.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 72)" /><rect x="103.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="138.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 73)" /><rect x="156.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(41, 30, 90)" /><rect x="173.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(59, 34, 108)" /><rect x="191.2" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(79, 38, 125)" /><rect x="208.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(80, 38, 124)" /><rect x="226.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(146, 53, 96)" /><rect x="243.6" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(252, 154, 77)" /><rect x="261.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(254, 158, 77)" /><rect x="278.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(105, 43, 113)" /><rect x="296.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(45, 31, 93)" /><rect x="313.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(35, 29, 85)" /><rect x="330.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 74)" /><rect x="348.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 66)" /><rect x="365.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 66)" /><rect x="383.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 63)" /><rect x="400.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 60)" /><rect x="418.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="34.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 28, 84)" /><rect x="51.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(53, 33, 101)" /><rect x="68.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 28, 84)" /><rect x="86.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="103.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="138.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 70)" /><rect x="156.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(41, 30, 90)" /><rect x="173.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(80, 38, 124)" /><rect x="191.2" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(138, 50, 99)" /><rect x="208.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(73, 37, 125)" /><rect x="226.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(71, 36, 124)" /><rect x="243.6" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(169, 65, 88)" /><rect x="261.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(189, 76, 81)" /><rect x="278.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(75, 37, 126)" /><rect x="296.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(38, 29, 87)" /><rect x="313.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(27, 27, 76)" /><rect x="330.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 70)" /><rect x="348.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 70)" /><rect x="365.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 73)" /><rect x="383.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 68)" /><rect x="400.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 61)" /><rect x="418.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="34.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="51.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="68.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="86.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="103.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 24, 62)" /><rect x="138.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 73)" /><rect x="156.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(42, 30, 91)" /><rect x="173.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(61, 34, 111)" /><rect x="191.2" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(70, 36, 122)" /><rect x="208.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(43, 30, 92)" /><rect x="226.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(31, 28, 81)" /><rect x="243.6" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(43, 30, 92)" /><rect x="261.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 33, 103)" /><rect x="278.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(51, 32, 98)" /><rect x="296.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(32, 28, 82)" /><rect x="313.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 70)" /><rect x="330.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 64)" /><rect x="348.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 64)" /><rect x="365.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 66)" /><rect x="383.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 63)" /><rect x="400.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 60)" /><rect x="418.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="34.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="34.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="51.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="51.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="68.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="68.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="86.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="86.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="103.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="103.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="121.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="121.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="138.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 64)" /><rect x="138.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="156.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(31, 28, 81)" /><rect x="156.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="173.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(51, 32, 98)" /><rect x="173.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="191.2" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(43, 30, 91)" /><rect x="191.2" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="208.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(29, 27, 80)" /><rect x="208.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="226.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 72)" /><rect x="226.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="243.6" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 26, 70)" /><rect x="243.6" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="261.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(24, 26, 71)" /><rect x="261.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="278.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 72)" /><rect x="278.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="296.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(25, 26, 73)" /><rect x="296.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="313.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(26, 26, 74)" /><rect x="313.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="330.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(23, 25, 69)" /><rect x="330.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="348.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(21, 25, 65)" /><rect x="348.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="365.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(22, 25, 66)" /><rect x="365.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="383.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(20, 25, 63)" /><rect x="383.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="400.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(19, 24, 60)" /><rect x="400.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="418.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="418.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" /><rect x="435.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(18, 24, 59)" /><rect x="435.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="url(#grad-celula-brilho)" />
 
     <text x="34" y="184.06666666666666" font-size="8.5" fill="#8891A6">Menos chamados</text>
     <rect x="112" y="179.06666666666666" width="264" height="5" rx="2.5" fill="url(#grad-legenda-calor)" />
@@ -570,11 +1017,374 @@
       </div>
     </section>
   
-      <div class="placeholder-secoes">
-        Conteúdo restante do relatório (Distribuição, Indicadores
-        Operacionais, Resumo Inteligente, Comparativos) — implementado nas
-        Sprints 5 a 7.
+      
+    <section class="secao-distribuicao">
+      <div class="card distrib-card">
+        <div class="distrib-card__cabecalho">
+          <div class="distrib-card__titulo">CHAMADOS POR CATEGORIA</div>
+          <div class="distrib-card__filtro">Top 5</div>
+        </div>
+        <div class="distrib-card__corpo-donut">
+          <div class="distrib-card__donut"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
+    <circle cx="100" cy="100" r="72" fill="none" stroke="#1B2338" stroke-width="24" />
+    <circle cx="100" cy="100" r="72" fill="none" stroke="#3B82F6" stroke-width="24" stroke-dasharray="91.86 360.53" stroke-dashoffset="0.00" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#8B5CF6" stroke-width="24" stroke-dasharray="62.67 389.72" stroke-dashoffset="-94.86" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#22C55E" stroke-width="24" stroke-dasharray="55.37 397.02" stroke-dashoffset="-160.53" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#F59E0B" stroke-width="24" stroke-dasharray="48.08 404.31" stroke-dashoffset="-218.90" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#EF4444" stroke-width="24" stroke-dasharray="40.78 411.61" stroke-dashoffset="-269.97" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#8891A6" stroke-width="24" stroke-dasharray="135.64 316.75" stroke-dashoffset="-313.75" transform="rotate(-90 100 100)" />
+    <text x="100" y="97" text-anchor="middle" font-size="28" font-weight="700" fill="#EAEDF5">62</text>
+    <text x="100" y="117" text-anchor="middle" font-size="10.5" fill="#8891A6">Total</text>
+  </svg></div>
+          <div class="distrib-card__legenda">
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #3B82F6;"></span>
+      <span class="distrib-legenda-nome">Impressora</span>
+      <span class="distrib-legenda-valor">13 (21%)</span>
+    </div>
+  
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #8B5CF6;"></span>
+      <span class="distrib-legenda-nome">Reposição</span>
+      <span class="distrib-legenda-valor">9 (15%)</span>
+    </div>
+  
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #22C55E;"></span>
+      <span class="distrib-legenda-nome">Hardware</span>
+      <span class="distrib-legenda-valor">8 (13%)</span>
+    </div>
+  
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #F59E0B;"></span>
+      <span class="distrib-legenda-nome">Rede</span>
+      <span class="distrib-legenda-valor">7 (11%)</span>
+    </div>
+  
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #EF4444;"></span>
+      <span class="distrib-legenda-nome">Sistema Interno</span>
+      <span class="distrib-legenda-valor">6 (10%)</span>
+    </div>
+  
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #8891A6;"></span>
+      <span class="distrib-legenda-nome">Outros</span>
+      <span class="distrib-legenda-valor">19 (30%)</span>
+    </div>
+  </div>
+        </div>
       </div>
+
+      <div class="card distrib-card">
+        <div class="distrib-card__cabecalho">
+          <div class="distrib-card__titulo">CHAMADOS POR SETOR</div>
+          <div class="distrib-card__filtro">Top 5</div>
+        </div>
+        <div class="distrib-card__corpo-barras"><svg class="barras-svg" viewBox="0 0 460 178" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
+    <line x1="101.1" y1="20" x2="101.1" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="101.1" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">0</text><line x1="198.7" y1="20" x2="198.7" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="198.7" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">5</text><line x1="296.4" y1="20" x2="296.4" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="296.4" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">10</text><line x1="394.0" y1="20" x2="394.0" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="394.0" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">15</text>
+    
+      <text x="93.12" y="40.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Recursos Humanos</text>
+      <rect x="101.12" y="29.0" width="214.8" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="40.0" text-anchor="end" font-size="9" fill="#8891A6">11 (18%)</text>
+    
+      <text x="93.12" y="70.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">TI</text>
+      <rect x="101.12" y="59.0" width="214.8" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="70.0" text-anchor="end" font-size="9" fill="#8891A6">11 (18%)</text>
+    
+      <text x="93.12" y="100.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Almoxarifado</text>
+      <rect x="101.12" y="89.0" width="175.7" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="100.0" text-anchor="end" font-size="9" fill="#8891A6">9 (15%)</text>
+    
+      <text x="93.12" y="130.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Legislativo</text>
+      <rect x="101.12" y="119.0" width="156.2" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="130.0" text-anchor="end" font-size="9" fill="#8891A6">8 (13%)</text>
+    
+      <text x="93.12" y="160.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Financeiro</text>
+      <rect x="101.12" y="149.0" width="136.7" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="160.0" text-anchor="end" font-size="9" fill="#8891A6">7 (11%)</text>
+    
+  </svg></div>
+      </div>
+
+      <div class="card distrib-card">
+        <div class="distrib-card__cabecalho">
+          <div class="distrib-card__titulo">CHAMADOS POR PRIORIDADE</div>
+        </div>
+        <div class="distrib-card__corpo-donut">
+          <div class="distrib-card__donut"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
+    <circle cx="100" cy="100" r="72" fill="none" stroke="#1B2338" stroke-width="24" />
+    <circle cx="100" cy="100" r="72" fill="none" stroke="#22C55E" stroke-width="24" stroke-dasharray="157.53 294.86" stroke-dashoffset="0.00" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#F59E0B" stroke-width="24" stroke-dasharray="201.30 251.08" stroke-dashoffset="-160.53" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#EF4444" stroke-width="24" stroke-dasharray="84.56 367.83" stroke-dashoffset="-364.83" transform="rotate(-90 100 100)" />
+    <text x="100" y="97" text-anchor="middle" font-size="28" font-weight="700" fill="#EAEDF5">62</text>
+    <text x="100" y="117" text-anchor="middle" font-size="10.5" fill="#8891A6">Total</text>
+  </svg></div>
+          <div class="distrib-card__legenda">
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #22C55E;"></span>
+      <span class="distrib-legenda-nome">Baixa</span>
+      <span class="distrib-legenda-valor">22 (35%)</span>
+    </div>
+  
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #F59E0B;"></span>
+      <span class="distrib-legenda-nome">Média</span>
+      <span class="distrib-legenda-valor">28 (45%)</span>
+    </div>
+  
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #EF4444;"></span>
+      <span class="distrib-legenda-nome">Alta</span>
+      <span class="distrib-legenda-valor">12 (19%)</span>
+    </div>
+  </div>
+        </div>
+      </div>
+    </section>
+  
+      
+    <section class="secao-indicadores">
+      <div class="card indic-card">
+        <div class="indic-card__cabecalho">
+          <div class="indic-card__titulo">EQUIPAMENTOS MAIS PROBLEMÁTICOS</div>
+          <div class="indic-card__filtro">Top 5</div>
+        </div>
+        <div class="indic-card__linhas" style="--escala-itens: 1.2909944487358056">
+      <div class="indic-linha">
+        <div class="indic-linha__badge"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg></div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Notebook Dell</div>
+          <div class="indic-linha__nome-secundario">Dell</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">2</div>
+          <div class="indic-linha__legenda"></div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__badge"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg></div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Notebook Ultrafino</div>
+          <div class="indic-linha__nome-secundario">Samsung</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">2</div>
+          <div class="indic-linha__legenda"><span class="">→ 0%</span></div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__badge"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg></div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Notebook</div>
+          <div class="indic-linha__nome-secundario">Positivo</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">1</div>
+          <div class="indic-linha__legenda"><span class="kpi-card__delta-seta--positivo">↓ 75%</span></div>
+        </div>
+      </div>
+    </div>
+      </div>
+
+      <div class="card indic-card">
+        <div class="indic-card__cabecalho">
+          <div class="indic-card__titulo">TÉCNICOS — DESEMPENHO</div>
+          <div class="indic-card__filtro">Top 5</div>
+        </div>
+        <div class="indic-card__linhas" style="--escala-itens: 1">
+      <div class="indic-linha">
+        <img class="indic-linha__avatar" src="https://lh3.googleusercontent.com/a/ACg8ocJHzJucfqrm5eLaD1e0W6BmAedYTERDgJIcbfLAzpqPSDiw8w4d=s96-c" alt="" />
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Iago Martins</div>
+          <div class="indic-linha__nome-secundario">18 resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">78%</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__avatar-iniciais">CL</div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Carlos Eduardo Lima</div>
+          <div class="indic-linha__nome-secundario">8 resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">75%</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__avatar-iniciais">DS</div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Diego Santos</div>
+          <div class="indic-linha__nome-secundario">6 resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">83%</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__avatar-iniciais">IS</div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Iago Martins Silva</div>
+          <div class="indic-linha__nome-secundario">5 resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">60%</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__avatar-iniciais">ER</div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Eduardo Ribeiro</div>
+          <div class="indic-linha__nome-secundario">5 resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">60%</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    </div>
+      </div>
+
+      <div class="card indic-card">
+        <div class="indic-card__cabecalho">
+          <div class="indic-card__titulo">SLA POR PRIORIDADE</div>
+        </div>
+        <div class="indic-card__gauge">
+          <div class="indic-card__gauge-anel"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
+    <circle cx="100" cy="100" r="72" fill="none" stroke="#1B2338" stroke-width="22" />
+    <circle cx="100" cy="100" r="72" fill="none" stroke="#EF4444" stroke-width="22" stroke-linecap="round" stroke-dasharray="330.24 122.15" transform="rotate(-90 100 100)" />
+    <text x="100" y="97" text-anchor="middle" font-size="26" font-weight="700" fill="#EAEDF5">73%</text>
+    <text x="100" y="117" text-anchor="middle" font-size="9.5" fill="#8891A6">SLA cumprido</text>
+  </svg></div>
+          
+    <div class="sla-prioridade-lista">
+      
+        <div class="sla-prioridade-item">
+          <span class="sla-prioridade-nome">
+            <span class="sla-prioridade-dot" style="background: #EF4444; display:inline-block; margin-right:4px; vertical-align:middle;"></span>Alta
+          </span>
+          <span class="sla-prioridade-fracao">63% (5/8)</span>
+        </div>
+      
+        <div class="sla-prioridade-item">
+          <span class="sla-prioridade-nome">
+            <span class="sla-prioridade-dot" style="background: #F59E0B; display:inline-block; margin-right:4px; vertical-align:middle;"></span>Média
+          </span>
+          <span class="sla-prioridade-fracao">79% (15/19)</span>
+        </div>
+      
+        <div class="sla-prioridade-item">
+          <span class="sla-prioridade-nome">
+            <span class="sla-prioridade-dot" style="background: #22C55E; display:inline-block; margin-right:4px; vertical-align:middle;"></span>Baixa
+          </span>
+          <span class="sla-prioridade-fracao">72% (13/18)</span>
+        </div>
+      
+    </div>
+  
+        </div>
+      </div>
+    </section>
+  
+      <section class="secao-final">
+        
+    <section class="card resumo-inteligente">
+      <div class="resumo-inteligente__titulo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="1.5"/><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1z"/><path d="M8 11h5M8 14h3"/><circle cx="15" cy="15.5" r="2.2"/><path d="M16.7 17.2L18.5 19"/></svg> RESUMO EXECUTIVO (ANÁLISE AUTOMÁTICA)</div>
+      <div class="resumo-inteligente__lista">
+    <div class="resumo-inteligente__item">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>
+      <div class="resumo-inteligente__item-texto">Durante Julho de 2026 foram registrados 62 chamados, um redução de 43% em relação ao mês anterior.</div>
+    </div>
+  
+    <div class="resumo-inteligente__item">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>
+      <div class="resumo-inteligente__item-texto">O setor Recursos Humanos concentrou a maior demanda (11 chamados), enquanto a categoria Impressora permaneceu como a principal origem dos incidentes.</div>
+    </div>
+  
+    <div class="resumo-inteligente__item">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
+      <div class="resumo-inteligente__item-texto">O cumprimento de SLA foi de 73%, abaixo da meta definida (90%), e o tempo médio de resolução subiu para 1d 6h, indicando atenção necessária na eficiência da equipe.</div>
+    </div>
+  
+    <div class="resumo-inteligente__item">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>
+      <div class="resumo-inteligente__item-texto">Observou-se concentração de chamados no período da tarde de quarta-feira, sugerindo um pico operacional recorrente.</div>
+    </div>
+  </div>
+    </section>
+  
+        
+    <section class="card comparativo-card">
+      <div class="comparativo-card__cabecalho">
+        <div class="comparativo-card__titulo">COMPARATIVOS</div>
+        <div class="comparativo-card__filtro">Mês</div>
+      </div>
+      <table class="comparativo-tabela">
+        <thead>
+          <tr>
+            <th>Métrica</th>
+            <th>Jul/2026</th>
+            <th>Jun/2026</th>
+            <th>Variação</th>
+          </tr>
+        </thead>
+        <tbody>
+      <tr>
+        <td>Total de chamados</td>
+        <td>62</td>
+        <td>109</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↓ 43%</span></td>
+      </tr>
+    
+      <tr>
+        <td>Resolvidos</td>
+        <td>45</td>
+        <td>92</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↓ 51%</span></td>
+      </tr>
+    
+      <tr>
+        <td>Tempo médio de resolução</td>
+        <td>1d 6h</td>
+        <td>18h 42m</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↑ 65%</span></td>
+      </tr>
+    
+      <tr>
+        <td>Tempo médio 1ª resposta</td>
+        <td>9h 26m</td>
+        <td>6h 36m</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↑ 43%</span></td>
+      </tr>
+    
+      <tr>
+        <td>SLA cumprido</td>
+        <td>73%</td>
+        <td>84%</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↓ 11 p.p.</span></td>
+      </tr>
+    
+      <tr>
+        <td>Backlog</td>
+        <td>17</td>
+        <td>17</td>
+        <td><span class="">→ 0%</span></td>
+      </tr>
+    </tbody>
+      </table>
+    </section>
+  
+      </section>
+      
+    <footer class="rodape-relatorio">
+      Relatório gerado pelo sistema Chama · Câmara Municipal de Itajubá
+    </footer>
+  
     </main>
   
   </div>

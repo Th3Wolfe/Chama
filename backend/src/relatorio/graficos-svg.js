@@ -281,4 +281,141 @@ function gerarHeatmap(heatmapData) {
   </svg>`;
 }
 
-module.exports = { gerarGraficoLinha, gerarHeatmap, formatarDataCurta, formatarDataLonga };
+// ---------------------------------------------------------------------------
+// Donut: recebe itens já coloridos (`[{ nome, total, cor }]` — a cor é
+// decidida por quem chama, em template.js, pra que a mesma paleta apareça
+// tanto no anel quanto na legenda em HTML ao lado) e desenha o anel com um
+// pequeno vão entre fatias, mais o total no centro.
+// ---------------------------------------------------------------------------
+function gerarDonut(itens, totalGeral) {
+  const tamanho = 200;
+  const centro = tamanho / 2;
+  const raio = 72;
+  const espessura = 24;
+  const circunferencia = 2 * Math.PI * raio;
+  const gapArco = 3; // vão visual entre fatias, em px de comprimento de arco
+
+  let offsetAcumulado = 0;
+  const arcos = itens.map((item) => {
+    const fracao = totalGeral > 0 ? item.total / totalGeral : 0;
+    const comprimentoCheio = fracao * circunferencia;
+    const comprimentoVisivel = Math.max(0, comprimentoCheio - gapArco);
+    const dasharray = `${comprimentoVisivel.toFixed(2)} ${(circunferencia - comprimentoVisivel).toFixed(2)}`;
+    const dashoffset = (-offsetAcumulado).toFixed(2);
+    offsetAcumulado += comprimentoCheio;
+    if (comprimentoCheio <= 0) return '';
+    return `<circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="${item.cor}" stroke-width="${espessura}" stroke-dasharray="${dasharray}" stroke-dashoffset="${dashoffset}" transform="rotate(-90 ${centro} ${centro})" />`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${tamanho} ${tamanho}" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
+    <circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="#1B2338" stroke-width="${espessura}" />
+    ${arcos}
+    <text x="${centro}" y="${centro - 3}" text-anchor="middle" font-size="28" font-weight="700" fill="#EAEDF5">${totalGeral}</text>
+    <text x="${centro}" y="${centro + 17}" text-anchor="middle" font-size="10.5" fill="#8891A6">Total</text>
+  </svg>`;
+}
+
+// ---------------------------------------------------------------------------
+// Barras horizontais: um item por linha (nome à esquerda, barra escalada por
+// um eixo X com marcações "redondas", igual ao critério do gráfico de linha).
+// ---------------------------------------------------------------------------
+function gerarBarrasHorizontais(itens) {
+  const largura = 460;
+  // Coluna de rótulo dinâmica: um valor fixo (a versão anterior usava 92px)
+  // corta nomes mais longos como "Gabinete da Presidência" pela esquerda —
+  // o texto é right-aligned terminando na borda da barra, então se ele
+  // precisar de mais espaço do que a coluna reserva, a ponta esquerda cai
+  // fora do viewBox e o SVG simplesmente corta (comportamento padrão de
+  // overflow). Em vez de um número fixo, mede o nome mais longo (estimativa
+  // por caractere, já que é SVG gerado no servidor sem medição real de
+  // fonte) e reserva o espaço necessário, com teto pra não sacrificar a
+  // área do gráfico quando um nome for exageradamente longo — nesse caso,
+  // trunca com reticências.
+  const FONTE_LABEL = 9.5;
+  const LARGURA_MEDIA_CHAR = FONTE_LABEL * 0.56; // estimativa pra essa família de fonte/tamanho
+  const MARGEM_LABEL_MIN = 60;
+  const MARGEM_LABEL_MAX = 150;
+  const maiorNome = itens.reduce((max, i) => Math.max(max, i.nome.length), 0);
+  const margemEsquerdaIdeal = 16 + maiorNome * LARGURA_MEDIA_CHAR;
+  const margemEsquerda = Math.min(MARGEM_LABEL_MAX, Math.max(MARGEM_LABEL_MIN, margemEsquerdaIdeal));
+  // Quantos caracteres cabem de fato na coluna escolhida — nomes maiores que
+  // isso (só acontece quando o teto acima entrou em ação) são truncados.
+  const maxCharsLabel = Math.max(3, Math.floor((margemEsquerda - 16) / LARGURA_MEDIA_CHAR));
+  const truncar = (nome) => (nome.length > maxCharsLabel ? `${nome.slice(0, maxCharsLabel - 1)}…` : nome);
+  const margemDireita = 10;
+  const margemLabel = 56; // coluna reservada pro texto "138 (16.7%)", fora da área da barra
+  const margemTopo = 22; // espaço pros rótulos do eixo X
+  const alturaLinha = 30;
+  const altura = margemTopo + itens.length * alturaLinha + 6;
+  const larguraUtil = largura - margemEsquerda - margemDireita - margemLabel;
+
+  const valorMax = Math.max(1, ...itens.map((i) => i.total));
+  // Escala com passo "redondo" (1, 2, 5, 10, 20, 25, 50, 100...), igual ao
+  // critério de eixo de qualquer ferramenta de BI — evita marcas tortas tipo
+  // "0, 1, 3, 4, 5" quando os valores são pequenos.
+  const PASSOS_CANDIDATOS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
+  const passo = PASSOS_CANDIDATOS.find((p) => valorMax / p <= 4) || Math.ceil(valorMax / 4);
+  const eixoMax = Math.ceil(valorMax / passo) * passo;
+  const escalaX = (v) => margemEsquerda + (v / eixoMax) * larguraUtil;
+
+  let grade = '';
+  for (let valor = 0; valor <= eixoMax; valor += passo) {
+    const x = escalaX(valor).toFixed(1);
+    grade += `<line x1="${x}" y1="${margemTopo - 2}" x2="${x}" y2="${(altura - 4).toFixed(1)}" stroke="#212A3E" stroke-width="1" />`;
+    grade += `<text x="${x}" y="${margemTopo - 8}" text-anchor="middle" font-size="8.5" fill="#8891A6">${valor}</text>`;
+  }
+
+  const barras = itens.map((item, i) => {
+    const y = margemTopo + i * alturaLinha;
+    const barY = y + 7;
+    const barH = alturaLinha - 15;
+    const barW = Math.max(2, escalaX(item.total) - margemEsquerda);
+    const rotuloValor = `${item.total} (${item.percentual}%)`;
+    return `
+      <text x="${margemEsquerda - 8}" y="${(y + alturaLinha / 2 + 3).toFixed(1)}" text-anchor="end" font-size="${FONTE_LABEL}" fill="#EAEDF5">${truncar(item.nome)}</text>
+      <rect x="${margemEsquerda}" y="${barY.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH}" rx="4" fill="#3B82F6" />
+      <text x="${(largura - margemDireita).toFixed(1)}" y="${(y + alturaLinha / 2 + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="#8891A6">${rotuloValor}</text>
+    `;
+  }).join('');
+
+  return `<svg class="barras-svg" viewBox="0 0 ${largura} ${altura}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
+    ${grade}
+    ${barras}
+  </svg>`;
+}
+
+// ---------------------------------------------------------------------------
+// Gauge de SLA: anel de valor único (não é uma distribuição — é "quanto % do
+// total está dentro do SLA"), com a cor mudando conforme a faixa, igual ao
+// semáforo já usado noutros lugares do relatório (verde/amarelo/vermelho).
+// ---------------------------------------------------------------------------
+function gerarGaugeSla(pct) {
+  const tamanho = 200;
+  const centro = tamanho / 2;
+  const raio = 72;
+  const espessura = 22;
+  const circunferencia = 2 * Math.PI * raio;
+  const pctSeguro = pct === null || pct === undefined ? 0 : Math.max(0, Math.min(100, pct));
+  const comprimento = (pctSeguro / 100) * circunferencia;
+  const cor = pctSeguro >= 90 ? '#22C55E' : pctSeguro >= 75 ? '#F59E0B' : '#EF4444';
+  const arco = pctSeguro > 0
+    ? `<circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="${cor}" stroke-width="${espessura}" stroke-linecap="round" stroke-dasharray="${comprimento.toFixed(2)} ${(circunferencia - comprimento).toFixed(2)}" transform="rotate(-90 ${centro} ${centro})" />`
+    : '';
+
+  return `<svg viewBox="0 0 ${tamanho} ${tamanho}" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
+    <circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="#1B2338" stroke-width="${espessura}" />
+    ${arco}
+    <text x="${centro}" y="${centro - 3}" text-anchor="middle" font-size="26" font-weight="700" fill="#EAEDF5">${pct !== null && pct !== undefined ? `${pct}%` : '—'}</text>
+    <text x="${centro}" y="${centro + 17}" text-anchor="middle" font-size="9.5" fill="#8891A6">SLA cumprido</text>
+  </svg>`;
+}
+
+module.exports = {
+  gerarGraficoLinha,
+  gerarHeatmap,
+  gerarDonut,
+  gerarBarrasHorizontais,
+  gerarGaugeSla,
+  formatarDataCurta,
+  formatarDataLonga,
+};

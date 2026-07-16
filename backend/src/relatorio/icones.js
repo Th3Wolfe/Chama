@@ -17,6 +17,9 @@ const CAMINHOS = {
   'building': '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/>',
   'printer': '<path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8" rx="1.5"/><path d="M7 16h10v5H7z"/>',
   'user': '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+  'calendar': '<rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/>',
+  'lightbulb': '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.45 1 1.15 1 1.9v.2h5v-.2c0-.75.4-1.45 1-1.9A6 6 0 0 0 12 3z"/>',
+  'clipboard-search': '<rect x="5" y="4" width="14" height="17" rx="1.5"/><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1z"/><path d="M8 11h5M8 14h3"/><circle cx="15" cy="15.5" r="2.2"/><path d="M16.7 17.2L18.5 19"/>',
 };
 
 function icone(nome, { cor = 'currentColor', tamanho = 18, largura = 2 } = {}) {

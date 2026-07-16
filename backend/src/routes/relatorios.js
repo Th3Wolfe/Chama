@@ -4,6 +4,8 @@ const ExcelJS = require('exceljs');
 const pool = require('../db');
 const { requireAdmin } = require('../middleware');
 const { buscarDadosRelatorio } = require('../relatorio/dados');
+const { gerarHtmlRelatorio } = require('../relatorio/template');
+const { gerarPdfRelatorio } = require('../relatorio/pdf');
 const router = express.Router();
 
 // Relatório Executivo Operacional — dados agregados de um mês específico.
@@ -19,6 +21,28 @@ router.get('/executivo/dados', requireAdmin, async (req, res) => {
     }
     throw err;
   }
+});
+
+// Relatório Executivo Operacional — PDF final, pronto pra download.
+// mes no formato YYYY-MM; sem o parâmetro, assume o mês corrente.
+router.get('/executivo/pdf', requireAdmin, async (req, res) => {
+  let dados;
+  try {
+    dados = await buscarDadosRelatorio(req.query.mes);
+  } catch (err) {
+    if (err.message.includes('Parâmetro "mes" inválido')) {
+      return res.status(400).json({ erro: err.message });
+    }
+    throw err;
+  }
+
+  const html = gerarHtmlRelatorio(dados);
+  const pdfBuffer = await gerarPdfRelatorio(html);
+
+  const nomeArquivo = `relatorio-executivo-${dados.periodo.mes_ref}.pdf`;
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivo}"`);
+  res.send(pdfBuffer);
 });
 
 async function enviarExcel(res, nomeArquivo, colunas, linhas) {

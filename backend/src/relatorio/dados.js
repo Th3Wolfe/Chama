@@ -49,7 +49,10 @@ function comMediaMovel(serie, janela = 7) {
 
 async function buscarDadosRelatorio(mesRefBruto) {
   const mesRef = mesRefBruto || new Date().toISOString().slice(0, 7);
-  const { inicioMes, mesExtenso, ano } = limitesMes(mesRef);
+  const { inicioMes, mesExtenso, ano, mes } = limitesMes(mesRef);
+  const mesAnteriorDate = new Date(Date.UTC(ano, mes - 2, 1));
+  const mesCurtoAtual = `${NOMES_MES[mes - 1].slice(0, 3)}/${ano}`;
+  const mesCurtoAnterior = `${NOMES_MES[mesAnteriorDate.getUTCMonth()].slice(0, 3)}/${mesAnteriorDate.getUTCFullYear()}`;
 
   // Filtro reaproveitado em várias queries: "está dentro do mês de referência".
   // $1 = inicioMes ('YYYY-MM-01'). Mês anterior = mesmo filtro subtraindo 1 mês.
@@ -198,13 +201,15 @@ async function buscarDadosRelatorio(mesRefBruto) {
     const slaPctAnterior = anterior.total_com_resolucao > 0
       ? Math.round((anterior.dentro_sla / anterior.total_com_resolucao) * 100)
       : null;
+    const tempoMedioResolucaoAnterior = anterior.tempo_medio_resolucao_seg ? Math.round(anterior.tempo_medio_resolucao_seg) : null;
+    const tempoMedio1aRespostaAnterior = anterior.tempo_medio_1a_resposta_seg ? Math.round(anterior.tempo_medio_1a_resposta_seg) : null;
     return {
-      total_chamados: { valor: atual.total_chamados, delta_pct: variacaoPercentual(atual.total_chamados, anterior.total_chamados) },
-      sla_cumprido_pct: { valor: slaPct, delta_pontos: slaPct !== null && slaPctAnterior !== null ? slaPct - slaPctAnterior : null },
-      tempo_medio_resolucao_seg: { valor: atual.tempo_medio_resolucao_seg ? Math.round(atual.tempo_medio_resolucao_seg) : null, delta_pct: variacaoPercentual(atual.tempo_medio_resolucao_seg, anterior.tempo_medio_resolucao_seg) },
-      tempo_medio_1a_resposta_seg: { valor: atual.tempo_medio_1a_resposta_seg ? Math.round(atual.tempo_medio_1a_resposta_seg) : null, delta_pct: variacaoPercentual(atual.tempo_medio_1a_resposta_seg, anterior.tempo_medio_1a_resposta_seg) },
-      resolvidos: { valor: atual.resolvidos, delta_pct: variacaoPercentual(atual.resolvidos, anterior.resolvidos) },
-      backlog: { valor: atual.backlog, delta_pct: variacaoPercentual(atual.backlog, anterior.backlog) },
+      total_chamados: { valor: atual.total_chamados, valor_anterior: anterior.total_chamados, delta_pct: variacaoPercentual(atual.total_chamados, anterior.total_chamados) },
+      sla_cumprido_pct: { valor: slaPct, valor_anterior: slaPctAnterior, delta_pontos: slaPct !== null && slaPctAnterior !== null ? slaPct - slaPctAnterior : null },
+      tempo_medio_resolucao_seg: { valor: atual.tempo_medio_resolucao_seg ? Math.round(atual.tempo_medio_resolucao_seg) : null, valor_anterior: tempoMedioResolucaoAnterior, delta_pct: variacaoPercentual(atual.tempo_medio_resolucao_seg, anterior.tempo_medio_resolucao_seg) },
+      tempo_medio_1a_resposta_seg: { valor: atual.tempo_medio_1a_resposta_seg ? Math.round(atual.tempo_medio_1a_resposta_seg) : null, valor_anterior: tempoMedio1aRespostaAnterior, delta_pct: variacaoPercentual(atual.tempo_medio_1a_resposta_seg, anterior.tempo_medio_1a_resposta_seg) },
+      resolvidos: { valor: atual.resolvidos, valor_anterior: anterior.resolvidos, delta_pct: variacaoPercentual(atual.resolvidos, anterior.resolvidos) },
+      backlog: { valor: atual.backlog, valor_anterior: anterior.backlog, delta_pct: variacaoPercentual(atual.backlog, anterior.backlog) },
     };
   }
   const kpis = montarKpis(kpisAtual.rows[0], kpisAnterior.rows[0]);
@@ -267,6 +272,8 @@ async function buscarDadosRelatorio(mesRefBruto) {
       mes_extenso: mesExtenso,
       ano,
       inicio: inicioMes,
+      mes_curto_atual: mesCurtoAtual,
+      mes_curto_anterior: mesCurtoAnterior,
       instituicao: 'Câmara Municipal de Itajubá',
       gerado_em: new Date().toISOString(),
     },
