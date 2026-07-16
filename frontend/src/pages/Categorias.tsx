@@ -25,7 +25,7 @@ import { pushToast } from '../components/Toast';
 import { api } from '../api/client';
 import type { Categoria, CategoriasPaginadas, CategoriasStats, Prioridade } from '../api/types';
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 10;
 
 const PRIORIDADE_OPCOES: { valor: Prioridade; label: string }[] = [
   { valor: 'baixa', label: 'Baixa' },

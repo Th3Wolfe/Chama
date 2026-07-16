@@ -53,7 +53,7 @@ export function ChamadosPorEquipamento({
               contentStyle={{ background: '#10162A', border: '1px solid #212A3E', borderRadius: 10, color: '#EAEDF5' }}
               labelStyle={{ color: '#EAEDF5' }}
             />
-            <Bar dataKey="total" radius={[0, 6, 6, 0]} maxBarSize={16}>
+            <Bar dataKey="total" radius={[0, 6, 6, 0]} maxBarSize={16} isAnimationActive={false}>
               {dadosGrafico.map((_, i) => (
                 <Cell key={i} fill={CORES[i % CORES.length]} />
               ))}

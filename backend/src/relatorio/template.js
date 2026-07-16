@@ -13,6 +13,14 @@ const FLAME_ICON_BASE64 = fs.readFileSync(
   path.join(__dirname, 'assets', 'flame-icon.png')
 ).toString('base64');
 
+// Fundo decorativo da capa lateral (substitui as ondas em SVG desenhadas à
+// mão): imagem gerada, convertida pra JPEG pra manter o HTML embutido leve
+// (o original em PNG passava de 1MB; em JPEG fica na casa dos 70KB sem perda
+// perceptível, já que é um fundo com gradiente suave, sem transparência).
+const CAPA_FUNDO_BASE64 = fs.readFileSync(
+  path.join(__dirname, 'assets', 'capa-fundo.jpg')
+).toString('base64');
+
 // Mesmos tokens de cor de frontend/src/styles/global.css — duplicados aqui de
 // propósito. O template roda isolado no backend (Puppeteer não tem acesso ao
 // CSS do frontend), então herdar variáveis de lá não é uma opção; manter os
@@ -68,7 +76,7 @@ const CSS_BASE = `
 
   /* ---------- Capa lateral (seção 1) ---------- */
   .capa {
-    background: var(--color-bg);
+    background: var(--color-bg) url('data:image/jpeg;base64,${CAPA_FUNDO_BASE64}') no-repeat center bottom / cover;
     border-right: 1px solid var(--color-border);
     padding: 32px 24px;
     display: flex;
@@ -149,14 +157,6 @@ const CSS_BASE = `
     margin-bottom: 2px;
   }
 
-  .capa__onda {
-    position: absolute;
-    left: -10px;
-    right: -10px;
-    bottom: 70px;
-    opacity: 0.55;
-  }
-
   /* ---------- Conteúdo principal (abaixo da faixa superior, largura cheia) ---------- */
   .conteudo {
     padding: 24px 28px 32px;
@@ -182,9 +182,8 @@ const CSS_BASE = `
   }
 
   .resumo-intro__texto {
-    font-size: 13px;
+    font-size: 16px;
     color: var(--color-text);
-    max-width: 900px;
     line-height: 1.55;
   }
 
@@ -213,7 +212,7 @@ const CSS_BASE = `
   }
 
   .kpi-card__label {
-    font-size: 11px;
+    font-size: 14.5px;
     color: var(--color-text-muted);
   }
 
@@ -224,7 +223,7 @@ const CSS_BASE = `
   }
 
   .kpi-card__delta {
-    font-size: 10.5px;
+    font-size: 14.5px;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -280,7 +279,7 @@ const CSS_BASE = `
   }
 
   .destaque-item__texto {
-    font-size: 11.5px;
+    font-size: 14.5px;
     color: var(--color-text);
     line-height: 1.4;
     text-align: center;
@@ -450,7 +449,7 @@ const CSS_BASE = `
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 10.5px;
+    font-size: 15.5px;
     color: var(--color-text-muted);
   }
 
@@ -624,17 +623,14 @@ const CSS_BASE = `
 
   .indic-card__gauge-anel {
     flex: 0 0 auto;
-    height: auto;
-    width: 100%;
-    max-height: 120px;
+    width: min(100%, 200px);
     aspect-ratio: 1 / 1;
   }
 
   .indic-card__gauge-anel svg {
     display: block;
+    width: 100%;
     height: 100%;
-    width: auto;
-    margin: 0 auto;
   }
 
   /* Linha de badges compactos abaixo do gauge (uma coluna por prioridade),
@@ -669,6 +665,7 @@ const CSS_BASE = `
     color: var(--color-text);
     font-weight: 600;
     white-space: nowrap;
+    font-size: medium;
   }
 
   .sla-prioridade-fracao {
@@ -677,6 +674,7 @@ const CSS_BASE = `
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    font-size: medium;
   }
 
   /* ---------- Resumo Executivo Inteligente + Comparativo (seções 8 e 9) ---------- */
@@ -904,7 +902,7 @@ function gerarSecaoDestaques(dados) {
   const destaques = gerarDestaques(dados);
   const itensHtml = destaques.map((d) => `
     <div class="destaque-item">
-      ${icone(d.icone, { cor: '#3B82F6', tamanho: 18 })}
+      ${icone(d.icone, { cor: '#3B82F6', tamanho: 25 })}
       <div class="destaque-item__texto">${d.texto}</div>
     </div>
   `);
@@ -972,13 +970,6 @@ function gerarCapaLateral(dados) {
         <div class="capa__periodo-datas">${formatarData(periodo.inicio)}</div>
         <div class="capa__periodo-datas">${ultimoDiaDoMes(periodo.inicio)}</div>
       </div>
-
-      <svg class="capa__onda" viewBox="0 0 240 100" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0,60 C30,20 60,90 90,50 C120,10 150,80 180,45 C200,25 220,55 240,40"
-          stroke="#3B82F6" stroke-width="1.5" fill="none" opacity="0.7" />
-        <path d="M0,75 C30,45 60,95 90,65 C120,35 150,90 180,60 C200,45 220,65 240,55"
-          stroke="#3B82F6" stroke-width="1.5" fill="none" opacity="0.4" />
-      </svg>
 
       <div class="capa__rodape">
         <div class="capa__rodape-label">Relatório gerado em</div>
@@ -1100,7 +1091,7 @@ function formatarDeltaEquipamento(deltaPct) {
 function escalaPorQuantidade(qtd, maxItens = 5) {
   const q = Math.max(qtd, 1);
   const escala = Math.sqrt(maxItens / q);
-  return Math.min(1.6, Math.max(1, escala));
+  return Math.min(1.6, Math.max(1.3, escala));
 }
 
 function gerarLinhasEquipamentos(equipamentos) {
@@ -1184,7 +1175,7 @@ function gerarSecaoIndicadores(dados) {
           <div class="indic-card__titulo">SLA POR PRIORIDADE</div>
         </div>
         <div class="indic-card__gauge">
-          <div class="indic-card__gauge-anel">${gerarGaugeSla(dados.sla_geral_pct)}</div>
+          <div class="indic-card__gauge-anel">${gerarGaugeSla(dados.sla_geral_pct, dados.sla_por_prioridade)}</div>
           ${gerarListaSlaPrioridade(dados.sla_por_prioridade)}
         </div>
       </div>

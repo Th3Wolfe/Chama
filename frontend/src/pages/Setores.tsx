@@ -25,7 +25,7 @@ import { pushToast } from '../components/Toast';
 import { api } from '../api/client';
 import type { Setor, SetoresPaginados, SetoresStats } from '../api/types';
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 10;
 
 interface FormSetor {
   nome: string;

@@ -40,13 +40,13 @@ function lerp(a, b, t) {
 // coral). Os stops abaixo replicam as cores reais do design, não são mais
 // inventados/aproximados.
 const PARADAS_CALOR = [
-  { t: 0, rgb: [18, 24, 59] },     // sem chamados — indigo escuro, ainda visível sobre o card
-  { t: 0.166, rgb: [28, 27, 79] },
-  { t: 0.333, rgb: [50, 32, 97] },
-  { t: 0.5, rgb: [74, 37, 127] },   // roxo
-  { t: 0.667, rgb: [140, 50, 98] }, // magenta
-  { t: 0.833, rgb: [216, 91, 71] }, // vermelho/coral
-  { t: 1, rgb: [254, 158, 77] },    // pico — laranja coral
+  { t: 0, rgb: [34, 22, 48] },      // sem chamados — plum escuro e quente (era indigo/azul frio)
+  { t: 0.166, rgb: [46, 24, 66] },
+  { t: 0.333, rgb: [66, 28, 88] },
+  { t: 0.5, rgb: [92, 35, 118] },   // roxo
+  { t: 0.667, rgb: [148, 48, 95] }, // magenta
+  { t: 0.833, rgb: [206, 70, 66] }, // vermelho puro (era [216, 91, 71], verde a mais deixava "sujo")
+  { t: 1, rgb: [255, 150, 70] },    // pico — laranja coral
 ];
 
 function interpolarCorCalor(t) {
@@ -67,7 +67,7 @@ function interpolarCorCalor(t) {
 // ---------------------------------------------------------------------------
 function gerarGraficoLinha(serieDiaria) {
   const largura = 600;
-  const altura = 260;
+  const altura = 190;
   const margem = { topo: 14, direita: 14, baixo: 26, esquerda: 32 };
   const larguraUtil = largura - margem.esquerda - margem.direita;
   const alturaUtil = altura - margem.topo - margem.baixo;
@@ -163,9 +163,12 @@ function gerarGraficoLinha(serieDiaria) {
 
 // ---------------------------------------------------------------------------
 // Heatmap: dia da semana × hora (24 colunas, 1h cada), rótulo de eixo a cada
-// 4h, com legenda de gradiente. Cada célula recebe um brilho sutil (gradiente
-// vertical claro→transparente por cima da cor sólida) pra não ficar "chapada",
-// igual ao protótipo.
+// 4h, com legenda de gradiente. Em vez de um brilho por cima (que quebrava
+// cada célula em 3 tons e as isolava das vizinhas), a opacidade de cada
+// célula acompanha o valor de calor: áreas frias ficam quase transparentes e
+// revelam o fundo do card, enquanto áreas quentes ficam sólidas — combinado
+// com o blur de suavizarMatriz, isso faz o calor se fundir em "setores"
+// contínuos em vez de blocos isolados, igual ao protótipo de alta fidelidade.
 // ---------------------------------------------------------------------------
 const ORDEM_DIAS_SEMANA = [1, 2, 3, 4, 5, 6, 0]; // segunda..domingo (DOW do Postgres: 0 = domingo)
 const NOMES_DIAS_SEMANA = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
@@ -234,14 +237,17 @@ function gerarHeatmap(heatmapData) {
       const valor = matrizSuave[diaSemana][col] || 0;
       const t = valor / valorMax;
       const cor = interpolarCorCalor(t);
+      // Opacidade acompanha o calor: perto de 0 a célula esmaece bastante,
+      // mas OPACIDADE_MIN garante que ainda dê pra enxergar contra o fundo do
+      // card (não é mais 0.12 → sumia quase por completo). A curva (raiz,
+      // não linear) reforça os valores baixos/médios sem achatar o topo da
+      // escala, que continua chegando em opacidade 1.
+      const OPACIDADE_MIN = 0.38;
+      const opacidade = OPACIDADE_MIN + (1 - OPACIDADE_MIN) * Math.pow(t, 0.55);
       const cx = margemEsquerda + col * colWidth;
       const w = lado.toFixed(1);
       const h = lado.toFixed(1);
-      celulas += `<rect x="${cx.toFixed(1)}" y="${y.toFixed(1)}" width="${w}" height="${h}" rx="${cellRx.toFixed(1)}" fill="${cor}" />`;
-      // Brilho: mesmo retângulo por cima, preenchido com o gradiente
-      // compartilhado (claro no topo, transparente embaixo) — dá a sensação
-      // de gradiente/glossy em vez de cor sólida chapada.
-      celulas += `<rect x="${cx.toFixed(1)}" y="${y.toFixed(1)}" width="${w}" height="${h}" rx="${cellRx.toFixed(1)}" fill="url(#grad-celula-brilho)" />`;
+      celulas += `<rect x="${cx.toFixed(1)}" y="${y.toFixed(1)}" width="${w}" height="${h}" rx="${cellRx.toFixed(1)}" fill="${cor}" fill-opacity="${opacidade.toFixed(2)}" />`;
     });
   });
 
@@ -263,11 +269,6 @@ function gerarHeatmap(heatmapData) {
     <defs>
       <linearGradient id="grad-legenda-calor" x1="0" y1="0" x2="1" y2="0">
         ${PARADAS_CALOR.map((p) => `<stop offset="${p.t * 100}%" stop-color="rgb(${p.rgb.join(',')})" />`).join('')}
-      </linearGradient>
-      <linearGradient id="grad-celula-brilho" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.16" />
-        <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0.03" />
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.12" />
       </linearGradient>
     </defs>
 
@@ -385,28 +386,47 @@ function gerarBarrasHorizontais(itens) {
 }
 
 // ---------------------------------------------------------------------------
-// Gauge de SLA: anel de valor único (não é uma distribuição — é "quanto % do
-// total está dentro do SLA"), com a cor mudando conforme a faixa, igual ao
-// semáforo já usado noutros lugares do relatório (verde/amarelo/vermelho).
+// Gauge de SLA por prioridade: 3 anéis concêntricos, um por prioridade. O
+// preenchimento de CADA anel é o próprio % de SLA daquela prioridade (o mesmo
+// número exibido na legenda abaixo) — não o volume de chamados. Assim a cor
+// e o tamanho do arco significam exatamente a mesma coisa que o texto embaixo,
+// em vez de duas métricas diferentes disputando a mesma representação visual.
+// O número central é o SLA geral (agregado, não é a soma dos 3 anéis).
 // ---------------------------------------------------------------------------
-function gerarGaugeSla(pct) {
+const CORES_PRIORIDADE_GAUGE = { alta: '#EF4444', media: '#F59E0B', baixa: '#22C55E' };
+// Do mais externo pro mais interno — ordem "de fora pra dentro" acompanha a
+// leitura da legenda abaixo (Alta / Média / Baixa).
+const ANEIS_PRIORIDADE_GAUGE = [
+  { prioridade: 'alta', raio: 82 },
+  { prioridade: 'media', raio: 64 },
+  { prioridade: 'baixa', raio: 46 },
+];
+const ESPESSURA_ANEL = 13;
+
+function gerarGaugeSla(pct, slaPorPrioridade = []) {
   const tamanho = 200;
   const centro = tamanho / 2;
-  const raio = 72;
-  const espessura = 22;
-  const circunferencia = 2 * Math.PI * raio;
-  const pctSeguro = pct === null || pct === undefined ? 0 : Math.max(0, Math.min(100, pct));
-  const comprimento = (pctSeguro / 100) * circunferencia;
-  const cor = pctSeguro >= 90 ? '#22C55E' : pctSeguro >= 75 ? '#F59E0B' : '#EF4444';
-  const arco = pctSeguro > 0
-    ? `<circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="${cor}" stroke-width="${espessura}" stroke-linecap="round" stroke-dasharray="${comprimento.toFixed(2)} ${(circunferencia - comprimento).toFixed(2)}" transform="rotate(-90 ${centro} ${centro})" />`
-    : '';
+
+  const aneis = ANEIS_PRIORIDADE_GAUGE.map(({ prioridade, raio }) => {
+    const dado = slaPorPrioridade.find((s) => s.prioridade === prioridade);
+    const cor = CORES_PRIORIDADE_GAUGE[prioridade];
+    const circunferencia = 2 * Math.PI * raio;
+    if (!dado || dado.total === 0 || dado.pct === null || dado.pct === undefined) {
+      // Sem chamados dessa prioridade no período: mostra só a trilha, sem arco.
+      return `<circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="#1B2338" stroke-width="${ESPESSURA_ANEL}" />`;
+    }
+    const pctSeguro = Math.max(0, Math.min(100, dado.pct));
+    const comprimento = (pctSeguro / 100) * circunferencia;
+    return `
+      <circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="#1B2338" stroke-width="${ESPESSURA_ANEL}" />
+      <circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="${cor}" stroke-width="${ESPESSURA_ANEL}" stroke-linecap="round" stroke-dasharray="${comprimento.toFixed(2)} ${(circunferencia - comprimento).toFixed(2)}" transform="rotate(-90 ${centro} ${centro})" />
+    `;
+  }).join('');
 
   return `<svg viewBox="0 0 ${tamanho} ${tamanho}" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
-    <circle cx="${centro}" cy="${centro}" r="${raio}" fill="none" stroke="#1B2338" stroke-width="${espessura}" />
-    ${arco}
-    <text x="${centro}" y="${centro - 3}" text-anchor="middle" font-size="26" font-weight="700" fill="#EAEDF5">${pct !== null && pct !== undefined ? `${pct}%` : '—'}</text>
-    <text x="${centro}" y="${centro + 17}" text-anchor="middle" font-size="9.5" fill="#8891A6">SLA cumprido</text>
+    ${aneis}
+    <text x="${centro}" y="${centro - 3}" text-anchor="middle" font-size="24" font-weight="700" fill="#EAEDF5">${pct !== null && pct !== undefined ? `${pct}%` : '—'}</text>
+    <text x="${centro}" y="${centro + 16}" text-anchor="middle" font-size="8.5" fill="#8891A6">SLA geral</text>
   </svg>`;
 }
 
