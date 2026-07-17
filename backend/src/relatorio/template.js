@@ -57,6 +57,16 @@ const CSS_BASE = `
     min-height: 100vh;
   }
 
+  /* No modo "página única" (gerarPdfRelatorioUmaPagina em pdf.js) a altura
+     da página do PDF é calculada a partir da altura real do conteúdo — não
+     faz sentido a caixa também tentar preencher 100vh (altura do viewport
+     do Puppeteer, que não tem relação com o tamanho final da página nesse
+     modo). Sem esse "min-height: 100vh" aqui, é exatamente isso que sobrava
+     como espaço em branco no fim da página. */
+  .pagina-unica .relatorio {
+    min-height: 0;
+  }
+
   /* Faixa superior: capa lateral ao lado do resumo executivo, KPIs e
      destaques — só essa faixa tem a coluna da capa; o restante do relatório
      (visão geral em diante) ocupa a largura inteira da página abaixo dela. */
@@ -802,14 +812,14 @@ const CSS_BASE = `
     padding-top: 12px;
   }
 
-  /* No PDF gerado pelo Puppeteer (Sprint 8) o rodapé repetido em cada página
-     já vem do footerTemplate nativo (page.pdf), então o rodapé estático do
-     fim do documento é escondido no media "print" pra não duplicar. Ele
-     continua visível ao abrir o HTML isolado direto no navegador (modo
-     "screen"), que é o que o critério de aceite da Sprint 2 pedia. */
-  @media print {
-    .rodape-relatorio { display: none; }
-  }
+  /* Rodapé único, no fim do documento — não repete por página. Até aqui
+     (Sprint 8) o PDF multi-página tinha um footerTemplate nativo do
+     Puppeteer repetido em toda página, e por isso esse rodapé estático
+     ficava escondido no media "print" pra não duplicar; removido a pedido
+     (o fundo escuro repetido embaixo de toda página não agradou
+     visualmente). Agora aparece normalmente também no PDF, só uma vez, no
+     fim do conteúdo — igual já acontecia no HTML aberto direto no
+     navegador. */
 `;
 
 function formatarData(isoDate) {
@@ -863,8 +873,7 @@ function formatarDeltaKpi(config, kpi) {
   const ehBom = config.bomSe === 'aumento' ? aumentouOuIgual : !aumentouOuIgual || delta === 0;
   const classeCor = delta === 0 ? '' : (ehBom ? 'kpi-card__delta-seta--positivo' : 'kpi-card__delta-seta--negativo');
   const seta = positivo ? '↑' : negativo ? '↓' : '→';
-  const sufixo = config.tipoDelta === 'pontos' ? 'p.p.' : '%';
-  return `<span class="${classeCor}">${seta} ${Math.abs(delta)}${config.tipoDelta === 'pontos' ? ' ' : ''}${sufixo}</span> <span class="kpi-card__delta-vs">vs. mês anterior</span>`;
+  return `<span class="${classeCor}">${seta} ${Math.abs(delta)}%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span>`;
 }
 
 function gerarResumoExecutivoIntro(dados) {
@@ -1227,8 +1236,7 @@ function formatarVariacaoComparativo(config, kpi) {
   const ehBom = configKpi.bomSe === 'aumento' ? aumentouOuIgual : !aumentouOuIgual || delta === 0;
   const classeCor = delta === 0 ? '' : (ehBom ? 'comparativo-tabela__variacao--positivo' : 'comparativo-tabela__variacao--negativo');
   const seta = positivo ? '↑' : negativo ? '↓' : '→';
-  const sufixo = config.tipoDelta === 'pontos' ? ' p.p.' : '%';
-  return `<span class="${classeCor}">${seta} ${Math.abs(delta)}${sufixo}</span>`;
+  return `<span class="${classeCor}">${seta} ${Math.abs(delta)}%</span>`;
 }
 
 function gerarSecaoComparativo(dados) {
@@ -1305,7 +1313,8 @@ function gerarConteudo(dados) {
   `;
 }
 
-function gerarHtmlRelatorio(dados) {
+function gerarHtmlRelatorio(dados, opcoes = {}) {
+  const classeBody = opcoes.paginaUnica ? 'pagina-unica' : '';
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1313,7 +1322,7 @@ function gerarHtmlRelatorio(dados) {
   <title>Relatório Executivo Operacional — ${dados.periodo.mes_extenso}</title>
   <style>${CSS_BASE}</style>
 </head>
-<body>
+<body class="${classeBody}">
   <div class="relatorio">
     <div class="topo">
       ${gerarCapaLateral(dados)}

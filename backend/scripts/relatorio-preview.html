@@ -35,6 +35,16 @@
     min-height: 100vh;
   }
 
+  /* No modo "página única" (gerarPdfRelatorioUmaPagina em pdf.js) a altura
+     da página do PDF é calculada a partir da altura real do conteúdo — não
+     faz sentido a caixa também tentar preencher 100vh (altura do viewport
+     do Puppeteer, que não tem relação com o tamanho final da página nesse
+     modo). Sem esse "min-height: 100vh" aqui, é exatamente isso que sobrava
+     como espaço em branco no fim da página. */
+  .pagina-unica .relatorio {
+    min-height: 0;
+  }
+
   /* Faixa superior: capa lateral ao lado do resumo executivo, KPIs e
      destaques — só essa faixa tem a coluna da capa; o restante do relatório
      (visão geral em diante) ocupa a largura inteira da página abaixo dela. */
@@ -780,17 +790,17 @@
     padding-top: 12px;
   }
 
-  /* No PDF gerado pelo Puppeteer (Sprint 8) o rodapé repetido em cada página
-     já vem do footerTemplate nativo (page.pdf), então o rodapé estático do
-     fim do documento é escondido no media "print" pra não duplicar. Ele
-     continua visível ao abrir o HTML isolado direto no navegador (modo
-     "screen"), que é o que o critério de aceite da Sprint 2 pedia. */
-  @media print {
-    .rodape-relatorio { display: none; }
-  }
+  /* Rodapé único, no fim do documento — não repete por página. Até aqui
+     (Sprint 8) o PDF multi-página tinha um footerTemplate nativo do
+     Puppeteer repetido em toda página, e por isso esse rodapé estático
+     ficava escondido no media "print" pra não duplicar; removido a pedido
+     (o fundo escuro repetido embaixo de toda página não agradou
+     visualmente). Agora aparece normalmente também no PDF, só uma vez, no
+     fim do conteúdo — igual já acontecia no HTML aberto direto no
+     navegador. */
 </style>
 </head>
-<body>
+<body class="">
   <div class="relatorio">
     <div class="topo">
       
@@ -814,7 +824,7 @@
 
       <div class="capa__rodape">
         <div class="capa__rodape-label">Relatório gerado em</div>
-        <div>16/07/2026 às 15:45</div>
+        <div>16/07/2026 às 19:14</div>
       </div>
     </aside>
   
@@ -836,8 +846,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         </div>
         <div class="kpi-card__label">Total de chamados</div>
-        <div class="kpi-card__valor">70</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↓ 26%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
+        <div class="kpi-card__valor">62</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↓ 43%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -845,8 +855,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
         </div>
         <div class="kpi-card__label">SLA cumprido</div>
-        <div class="kpi-card__valor">84%</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--positivo">↑ 1 p.p.</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
+        <div class="kpi-card__valor">73%</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↓ 11%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -854,8 +864,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
         </div>
         <div class="kpi-card__label">Tempo médio de resolução</div>
-        <div class="kpi-card__valor">20h 11m</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--positivo">↓ 13%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
+        <div class="kpi-card__valor">1d 6h</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↑ 65%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -863,8 +873,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 4.9 16.5L21 21l-1.2-3.9A9 9 0 0 0 12 3z"/></svg>
         </div>
         <div class="kpi-card__label">Tempo médio 1ª resposta</div>
-        <div class="kpi-card__valor">8h 38m</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↑ 1%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
+        <div class="kpi-card__valor">9h 26m</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↑ 43%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -872,8 +882,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>
         </div>
         <div class="kpi-card__label">Resolvidos</div>
-        <div class="kpi-card__valor">51</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↓ 28%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
+        <div class="kpi-card__valor">45</div>
+        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--negativo">↓ 51%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     
       <div class="card kpi-card">
@@ -881,8 +891,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9.5 16H2.5L12 4z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.8" fill="currentColor" stroke="none"/></svg>
         </div>
         <div class="kpi-card__label">Backlog</div>
-        <div class="kpi-card__valor">19</div>
-        <div class="kpi-card__delta"><span class="kpi-card__delta-seta--positivo">↓ 21%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
+        <div class="kpi-card__valor">17</div>
+        <div class="kpi-card__delta"><span class="">→ 0%</span> <span class="kpi-card__delta-vs">vs. mês anterior</span></div>
       </div>
     </section>
       
@@ -890,28 +900,23 @@
       <div class="destaques__titulo">DESTAQUES DO PERÍODO</div>
       <div class="destaques__grade">
     <div class="destaque-item">
-      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>
-      <div class="destaque-item__texto">O setor Compras apresentou aumento de 80% nos incidentes.</div>
-    </div>
-  <div class="destaque-divisor"></div>
-    <div class="destaque-item">
       <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>
-      <div class="destaque-item__texto">Os chamados caíram 26% em relação ao mês anterior.</div>
-    </div>
-  <div class="destaque-divisor"></div>
-    <div class="destaque-item">
-      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8" rx="1.5"/><path d="M7 16h10v5H7z"/></svg>
-      <div class="destaque-item__texto">Hardware respondeu por 24% dos chamados.</div>
+      <div class="destaque-item__texto">Os chamados caíram 43% em relação ao mês anterior.</div>
     </div>
   <div class="destaque-divisor"></div>
     <div class="destaque-item">
       <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
-      <div class="destaque-item__texto">Camila Rodrigues recebeu 19% dos chamados do mês.</div>
+      <div class="destaque-item__texto">Iago Martins recebeu 29% dos chamados do mês.</div>
     </div>
   <div class="destaque-divisor"></div>
     <div class="destaque-item">
-      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
-      <div class="destaque-item__texto">O tempo médio de resolução caiu 13% no período.</div>
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>
+      <div class="destaque-item__texto">O setor Recursos Humanos apresentou aumento de 22% nos incidentes.</div>
+    </div>
+  <div class="destaque-divisor"></div>
+    <div class="destaque-item">
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8" rx="1.5"/><path d="M7 16h10v5H7z"/></svg>
+      <div class="destaque-item__texto">Impressora respondeu por 21% dos chamados.</div>
     </div>
   </div>
     </section>
@@ -960,19 +965,16 @@
       <text x="26" y="17" text-anchor="end" font-size="8.5" fill="#8891A6">10</text>
     
 
-    <path d="M 32.0,164.0 L 32.0,119.0 L 50.5,134.0 L 68.9,29.0 L 87.4,149.0 L 105.9,149.0 L 124.3,44.0 L 142.8,134.0 L 161.3,89.0 L 179.7,74.0 L 198.2,74.0 L 216.7,164.0 L 235.1,164.0 L 253.6,29.0 L 272.1,59.0 L 290.5,44.0 L 309.0,119.0 L 327.5,164.0 L 345.9,164.0 L 364.4,164.0 L 382.9,164.0 L 401.3,164.0 L 419.8,164.0 L 438.3,164.0 L 456.7,164.0 L 475.2,164.0 L 493.7,164.0 L 512.1,164.0 L 530.6,164.0 L 549.1,164.0 L 567.5,164.0 L 586.0,164.0 L 586.0,164.0 Z" fill="url(#grad-area-linha)" stroke="none" />
-    <path d="M 32.0,119.0 L 50.5,126.5 L 68.9,93.5 L 87.4,107.0 L 105.9,116.0 L 124.3,104.0 L 142.8,108.5 L 161.3,104.0 L 179.7,95.0 L 198.2,102.5 L 216.7,104.0 L 235.1,105.5 L 253.6,104.0 L 272.1,93.5 L 290.5,87.5 L 309.0,93.5 L 327.5,105.5 L 345.9,105.5 L 364.4,105.5 L 382.9,125.0 L 401.3,140.0 L 419.8,158.0 L 438.3,164.0 L 456.7,164.0 L 475.2,164.0 L 493.7,164.0 L 512.1,164.0 L 530.6,164.0 L 549.1,164.0 L 567.5,164.0 L 586.0,164.0" fill="none" stroke="#8891A6" stroke-width="1.4" stroke-dasharray="4 3" />
-    <path d="M 32.0,119.0 L 50.5,134.0 L 68.9,29.0 L 87.4,149.0 L 105.9,149.0 L 124.3,44.0 L 142.8,134.0 L 161.3,89.0 L 179.7,74.0 L 198.2,74.0 L 216.7,164.0 L 235.1,164.0 L 253.6,29.0 L 272.1,59.0 L 290.5,44.0 L 309.0,119.0 L 327.5,164.0 L 345.9,164.0 L 364.4,164.0 L 382.9,164.0 L 401.3,164.0 L 419.8,164.0 L 438.3,164.0 L 456.7,164.0 L 475.2,164.0 L 493.7,164.0 L 512.1,164.0 L 530.6,164.0 L 549.1,164.0 L 567.5,164.0 L 586.0,164.0" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+    <path d="M 32.0,164.0 L 32.0,44.0 L 50.5,119.0 L 68.9,104.0 L 87.4,134.0 L 105.9,149.0 L 124.3,119.0 L 142.8,74.0 L 161.3,149.0 L 179.7,14.0 L 198.2,29.0 L 216.7,149.0 L 235.1,164.0 L 253.6,59.0 L 272.1,119.0 L 290.5,104.0 L 309.0,164.0 L 327.5,164.0 L 345.9,164.0 L 364.4,164.0 L 382.9,164.0 L 401.3,164.0 L 419.8,164.0 L 438.3,164.0 L 456.7,164.0 L 475.2,164.0 L 493.7,164.0 L 512.1,164.0 L 530.6,164.0 L 549.1,164.0 L 567.5,164.0 L 586.0,164.0 L 586.0,164.0 Z" fill="url(#grad-area-linha)" stroke="none" />
+    <path d="M 32.0,44.0 L 50.5,81.5 L 68.9,89.0 L 87.4,99.5 L 105.9,110.0 L 124.3,111.5 L 142.8,105.5 L 161.3,120.5 L 179.7,105.5 L 198.2,95.0 L 216.7,98.0 L 235.1,99.5 L 253.6,90.5 L 272.1,98.0 L 290.5,90.5 L 309.0,113.0 L 327.5,132.5 L 345.9,134.0 L 364.4,134.0 L 382.9,149.0 L 401.3,155.0 L 419.8,164.0 L 438.3,164.0 L 456.7,164.0 L 475.2,164.0 L 493.7,164.0 L 512.1,164.0 L 530.6,164.0 L 549.1,164.0 L 567.5,164.0 L 586.0,164.0" fill="none" stroke="#8891A6" stroke-width="1.4" stroke-dasharray="4 3" />
+    <path d="M 32.0,44.0 L 50.5,119.0 L 68.9,104.0 L 87.4,134.0 L 105.9,149.0 L 124.3,119.0 L 142.8,74.0 L 161.3,149.0 L 179.7,14.0 L 198.2,29.0 L 216.7,149.0 L 235.1,164.0 L 253.6,59.0 L 272.1,119.0 L 290.5,104.0 L 309.0,164.0 L 327.5,164.0 L 345.9,164.0 L 364.4,164.0 L 382.9,164.0 L 401.3,164.0 L 419.8,164.0 L 438.3,164.0 L 456.7,164.0 L 475.2,164.0 L 493.7,164.0 L 512.1,164.0 L 530.6,164.0 L 549.1,164.0 L 567.5,164.0 L 586.0,164.0" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
 
-    <circle cx="32.0" cy="119.0" r="2" fill="#3B82F6" /><circle cx="50.5" cy="134.0" r="2" fill="#3B82F6" /><circle cx="68.9" cy="29.0" r="2" fill="#3B82F6" /><circle cx="87.4" cy="149.0" r="2" fill="#3B82F6" /><circle cx="105.9" cy="149.0" r="2" fill="#3B82F6" /><circle cx="124.3" cy="44.0" r="2" fill="#3B82F6" /><circle cx="142.8" cy="134.0" r="2" fill="#3B82F6" /><circle cx="161.3" cy="89.0" r="2" fill="#3B82F6" /><circle cx="179.7" cy="74.0" r="2" fill="#3B82F6" /><circle cx="198.2" cy="74.0" r="2" fill="#3B82F6" /><circle cx="216.7" cy="164.0" r="2" fill="#3B82F6" /><circle cx="235.1" cy="164.0" r="2" fill="#3B82F6" /><circle cx="253.6" cy="29.0" r="2" fill="#3B82F6" /><circle cx="272.1" cy="59.0" r="2" fill="#3B82F6" /><circle cx="290.5" cy="44.0" r="2" fill="#3B82F6" /><circle cx="309.0" cy="119.0" r="2" fill="#3B82F6" /><circle cx="327.5" cy="164.0" r="2" fill="#3B82F6" /><circle cx="345.9" cy="164.0" r="2" fill="#3B82F6" /><circle cx="364.4" cy="164.0" r="2" fill="#3B82F6" /><circle cx="382.9" cy="164.0" r="2" fill="#3B82F6" /><circle cx="401.3" cy="164.0" r="2" fill="#3B82F6" /><circle cx="419.8" cy="164.0" r="2" fill="#3B82F6" /><circle cx="438.3" cy="164.0" r="2" fill="#3B82F6" /><circle cx="456.7" cy="164.0" r="2" fill="#3B82F6" /><circle cx="475.2" cy="164.0" r="2" fill="#3B82F6" /><circle cx="493.7" cy="164.0" r="2" fill="#3B82F6" /><circle cx="512.1" cy="164.0" r="2" fill="#3B82F6" /><circle cx="530.6" cy="164.0" r="2" fill="#3B82F6" /><circle cx="549.1" cy="164.0" r="2" fill="#3B82F6" /><circle cx="567.5" cy="164.0" r="2" fill="#3B82F6" /><circle cx="586.0" cy="164.0" r="2" fill="#3B82F6" />
+    <circle cx="32.0" cy="44.0" r="2" fill="#3B82F6" /><circle cx="50.5" cy="119.0" r="2" fill="#3B82F6" /><circle cx="68.9" cy="104.0" r="2" fill="#3B82F6" /><circle cx="87.4" cy="134.0" r="2" fill="#3B82F6" /><circle cx="105.9" cy="149.0" r="2" fill="#3B82F6" /><circle cx="124.3" cy="119.0" r="2" fill="#3B82F6" /><circle cx="142.8" cy="74.0" r="2" fill="#3B82F6" /><circle cx="161.3" cy="149.0" r="2" fill="#3B82F6" /><circle cx="179.7" cy="14.0" r="2" fill="#3B82F6" /><circle cx="198.2" cy="29.0" r="2" fill="#3B82F6" /><circle cx="216.7" cy="149.0" r="2" fill="#3B82F6" /><circle cx="235.1" cy="164.0" r="2" fill="#3B82F6" /><circle cx="253.6" cy="59.0" r="2" fill="#3B82F6" /><circle cx="272.1" cy="119.0" r="2" fill="#3B82F6" /><circle cx="290.5" cy="104.0" r="2" fill="#3B82F6" /><circle cx="309.0" cy="164.0" r="2" fill="#3B82F6" /><circle cx="327.5" cy="164.0" r="2" fill="#3B82F6" /><circle cx="345.9" cy="164.0" r="2" fill="#3B82F6" /><circle cx="364.4" cy="164.0" r="2" fill="#3B82F6" /><circle cx="382.9" cy="164.0" r="2" fill="#3B82F6" /><circle cx="401.3" cy="164.0" r="2" fill="#3B82F6" /><circle cx="419.8" cy="164.0" r="2" fill="#3B82F6" /><circle cx="438.3" cy="164.0" r="2" fill="#3B82F6" /><circle cx="456.7" cy="164.0" r="2" fill="#3B82F6" /><circle cx="475.2" cy="164.0" r="2" fill="#3B82F6" /><circle cx="493.7" cy="164.0" r="2" fill="#3B82F6" /><circle cx="512.1" cy="164.0" r="2" fill="#3B82F6" /><circle cx="530.6" cy="164.0" r="2" fill="#3B82F6" /><circle cx="549.1" cy="164.0" r="2" fill="#3B82F6" /><circle cx="567.5" cy="164.0" r="2" fill="#3B82F6" /><circle cx="586.0" cy="164.0" r="2" fill="#3B82F6" />
 
     <text x="32.0" y="184" text-anchor="middle" font-size="8.5" fill="#8891A6">01/07</text><text x="142.8" y="184" text-anchor="middle" font-size="8.5" fill="#8891A6">07/07</text><text x="253.6" y="184" text-anchor="middle" font-size="8.5" fill="#8891A6">13/07</text><text x="364.4" y="184" text-anchor="middle" font-size="8.5" fill="#8891A6">19/07</text><text x="475.2" y="184" text-anchor="middle" font-size="8.5" fill="#8891A6">25/07</text><text x="586.0" y="184" text-anchor="middle" font-size="8.5" fill="#8891A6">31/07</text>
 
     
-      <circle cx="68.9" cy="29.0" r="4" fill="#0A0E18" stroke="#3B82F6" stroke-width="2" />
-      <rect x="32.0" y="41.0" width="96" height="34" rx="6" fill="#1B2338" stroke="#3B82F6" stroke-width="1" />
-      <text x="80.0" y="55.0" text-anchor="middle" font-size="8.5" font-weight="700" fill="#EAEDF5">03/07/2026</text>
-      <text x="80.0" y="67.0" text-anchor="middle" font-size="8.5" fill="#8891A6">9 chamados</text>
+      <circle cx="179.7" cy="14.0" r="4" fill="#0A0E18" stroke="#3B82F6" stroke-width="2" />
     
   </svg></div>
       </div>
@@ -985,13 +987,13 @@
         <div class="grafico-card__corpo"><svg class="heatmap-svg" viewBox="0 0 460 203.06666666666666" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
     <defs>
       <linearGradient id="grad-legenda-calor" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="rgb(34,22,48)" /><stop offset="16.6%" stop-color="rgb(46,24,66)" /><stop offset="33.300000000000004%" stop-color="rgb(66,28,88)" /><stop offset="50%" stop-color="rgb(92,35,118)" /><stop offset="66.7%" stop-color="rgb(148,48,95)" /><stop offset="83.3%" stop-color="rgb(206,70,66)" /><stop offset="100%" stop-color="rgb(255,150,70)" />
+        <stop offset="0%" stop-color="rgb(49,32,65)" /><stop offset="16.6%" stop-color="rgb(62,33,83)" /><stop offset="33.300000000000004%" stop-color="rgb(78,33,98)" /><stop offset="50%" stop-color="rgb(92,35,118)" /><stop offset="66.7%" stop-color="rgb(148,48,95)" /><stop offset="83.3%" stop-color="rgb(206,70,66)" /><stop offset="100%" stop-color="rgb(255,150,70)" />
       </linearGradient>
     </defs>
 
     <text x="34.0" y="16" text-anchor="middle" font-size="9" fill="#8891A6">00h</text><text x="103.9" y="16" text-anchor="middle" font-size="9" fill="#8891A6">04h</text><text x="173.7" y="16" text-anchor="middle" font-size="9" fill="#8891A6">08h</text><text x="243.6" y="16" text-anchor="middle" font-size="9" fill="#8891A6">12h</text><text x="313.5" y="16" text-anchor="middle" font-size="9" fill="#8891A6">16h</text><text x="383.3" y="16" text-anchor="middle" font-size="9" fill="#8891A6">20h</text>
     <text x="26" y="36.1" text-anchor="end" font-size="9" fill="#8891A6">Seg</text><text x="26" y="53.6" text-anchor="end" font-size="9" fill="#8891A6">Ter</text><text x="26" y="71.1" text-anchor="end" font-size="9" fill="#8891A6">Qua</text><text x="26" y="88.5" text-anchor="end" font-size="9" fill="#8891A6">Qui</text><text x="26" y="106.0" text-anchor="end" font-size="9" fill="#8891A6">Sex</text><text x="26" y="123.5" text-anchor="end" font-size="9" fill="#8891A6">Sáb</text><text x="26" y="140.9" text-anchor="end" font-size="9" fill="#8891A6">Dom</text>
-    <rect x="34.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="51.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="68.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="86.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="103.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="121.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="138.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(40, 23, 57)" fill-opacity="0.53" /><rect x="156.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(72, 30, 95)" fill-opacity="0.74" /><rect x="173.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(188, 63, 75)" fill-opacity="0.92" /><rect x="191.2" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(212, 79, 66)" fill-opacity="0.95" /><rect x="208.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(159, 52, 90)" fill-opacity="0.89" /><rect x="226.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(120, 41, 107)" fill-opacity="0.84" /><rect x="243.6" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(130, 44, 103)" fill-opacity="0.85" /><rect x="261.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(180, 60, 79)" fill-opacity="0.91" /><rect x="278.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(172, 57, 83)" fill-opacity="0.90" /><rect x="296.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(76, 31, 100)" fill-opacity="0.75" /><rect x="313.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(53, 25, 73)" fill-opacity="0.65" /><rect x="330.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 26, 75)" fill-opacity="0.66" /><rect x="348.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(44, 24, 63)" fill-opacity="0.59" /><rect x="365.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(37, 22, 52)" fill-opacity="0.48" /><rect x="383.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="400.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="418.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="435.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="34.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="51.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="68.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="86.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="103.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="121.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="138.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(39, 23, 56)" fill-opacity="0.52" /><rect x="156.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(71, 29, 94)" fill-opacity="0.74" /><rect x="173.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(201, 68, 68)" fill-opacity="0.94" /><rect x="191.2" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(248, 139, 69)" fill-opacity="0.99" /><rect x="208.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(197, 67, 70)" fill-opacity="0.93" /><rect x="226.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(163, 54, 87)" fill-opacity="0.89" /><rect x="243.6" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(166, 55, 86)" fill-opacity="0.90" /><rect x="261.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(199, 67, 69)" fill-opacity="0.93" /><rect x="278.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(175, 58, 81)" fill-opacity="0.91" /><rect x="296.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(103, 38, 114)" fill-opacity="0.82" /><rect x="313.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(76, 31, 99)" fill-opacity="0.75" /><rect x="330.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(70, 29, 92)" fill-opacity="0.73" /><rect x="348.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(48, 24, 69)" fill-opacity="0.63" /><rect x="365.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(37, 23, 53)" fill-opacity="0.49" /><rect x="383.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="400.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="418.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="435.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="34.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="51.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="68.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="86.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="103.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="121.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(35, 22, 49)" fill-opacity="0.43" /><rect x="138.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(41, 23, 59)" fill-opacity="0.55" /><rect x="156.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(74, 30, 98)" fill-opacity="0.75" /><rect x="173.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(190, 64, 74)" fill-opacity="0.92" /><rect x="191.2" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(232, 113, 68)" fill-opacity="0.97" /><rect x="208.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(180, 60, 79)" fill-opacity="0.91" /><rect x="226.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(150, 49, 94)" fill-opacity="0.88" /><rect x="243.6" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(135, 45, 100)" fill-opacity="0.86" /><rect x="261.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(161, 53, 89)" fill-opacity="0.89" /><rect x="278.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(164, 54, 87)" fill-opacity="0.89" /><rect x="296.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(190, 64, 74)" fill-opacity="0.92" /><rect x="313.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(157, 51, 91)" fill-opacity="0.89" /><rect x="330.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(75, 31, 99)" fill-opacity="0.75" /><rect x="348.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(43, 23, 61)" fill-opacity="0.58" /><rect x="365.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(35, 22, 50)" fill-opacity="0.45" /><rect x="383.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="400.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="418.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="435.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="34.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="51.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="68.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="86.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="103.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="121.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(36, 22, 51)" fill-opacity="0.46" /><rect x="138.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(46, 24, 65)" fill-opacity="0.61" /><rect x="156.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(85, 33, 109)" fill-opacity="0.78" /><rect x="173.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(182, 61, 78)" fill-opacity="0.91" /><rect x="191.2" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(232, 112, 68)" fill-opacity="0.97" /><rect x="208.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(217, 88, 67)" fill-opacity="0.95" /><rect x="226.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(154, 50, 92)" fill-opacity="0.88" /><rect x="243.6" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(94, 35, 117)" fill-opacity="0.81" /><rect x="261.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(115, 40, 109)" fill-opacity="0.83" /><rect x="278.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(154, 50, 92)" fill-opacity="0.88" /><rect x="296.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(209, 75, 66)" fill-opacity="0.94" /><rect x="313.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(197, 67, 70)" fill-opacity="0.93" /><rect x="330.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(81, 32, 106)" fill-opacity="0.77" /><rect x="348.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(42, 23, 61)" fill-opacity="0.57" /><rect x="365.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(35, 22, 49)" fill-opacity="0.43" /><rect x="383.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="400.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="418.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="435.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="34.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="51.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="68.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="86.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="103.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="121.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(36, 22, 51)" fill-opacity="0.46" /><rect x="138.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(43, 23, 61)" fill-opacity="0.58" /><rect x="156.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(61, 27, 83)" fill-opacity="0.70" /><rect x="173.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(91, 35, 116)" fill-opacity="0.80" /><rect x="191.2" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(195, 66, 71)" fill-opacity="0.93" /><rect x="208.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(255, 150, 70)" fill-opacity="1.00" /><rect x="226.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(188, 63, 75)" fill-opacity="0.92" /><rect x="243.6" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(83, 33, 108)" fill-opacity="0.78" /><rect x="261.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(76, 31, 100)" fill-opacity="0.75" /><rect x="278.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(90, 34, 115)" fill-opacity="0.80" /><rect x="296.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(94, 35, 117)" fill-opacity="0.81" /><rect x="313.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(84, 33, 109)" fill-opacity="0.78" /><rect x="330.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(60, 27, 82)" fill-opacity="0.69" /><rect x="348.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(42, 23, 60)" fill-opacity="0.56" /><rect x="365.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(35, 22, 50)" fill-opacity="0.45" /><rect x="383.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="400.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="418.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="435.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="34.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="51.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="68.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="86.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="103.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="121.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(35, 22, 49)" fill-opacity="0.43" /><rect x="138.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(37, 22, 52)" fill-opacity="0.48" /><rect x="156.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(40, 23, 56)" fill-opacity="0.53" /><rect x="173.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(45, 24, 64)" fill-opacity="0.60" /><rect x="191.2" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(66, 28, 88)" fill-opacity="0.72" /><rect x="208.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(88, 34, 113)" fill-opacity="0.79" /><rect x="226.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(74, 30, 97)" fill-opacity="0.75" /><rect x="243.6" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(53, 25, 73)" fill-opacity="0.65" /><rect x="261.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 26, 75)" fill-opacity="0.66" /><rect x="278.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(63, 27, 85)" fill-opacity="0.70" /><rect x="296.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 25, 73)" fill-opacity="0.65" /><rect x="313.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(42, 23, 60)" fill-opacity="0.56" /><rect x="330.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(39, 23, 55)" fill-opacity="0.52" /><rect x="348.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(37, 22, 52)" fill-opacity="0.48" /><rect x="365.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(35, 22, 49)" fill-opacity="0.43" /><rect x="383.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="400.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="418.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="435.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="34.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="51.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="68.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="86.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="103.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="121.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="138.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(37, 22, 52)" fill-opacity="0.48" /><rect x="156.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(46, 24, 65)" fill-opacity="0.61" /><rect x="173.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(65, 28, 87)" fill-opacity="0.71" /><rect x="191.2" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(71, 29, 94)" fill-opacity="0.74" /><rect x="208.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(73, 30, 96)" fill-opacity="0.74" /><rect x="226.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(73, 30, 96)" fill-opacity="0.74" /><rect x="243.6" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(65, 28, 87)" fill-opacity="0.71" /><rect x="261.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(66, 28, 88)" fill-opacity="0.72" /><rect x="278.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(64, 28, 86)" fill-opacity="0.71" /><rect x="296.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(46, 24, 66)" fill-opacity="0.61" /><rect x="313.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(39, 23, 56)" fill-opacity="0.52" /><rect x="330.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(38, 23, 54)" fill-opacity="0.51" /><rect x="348.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(37, 22, 52)" fill-opacity="0.48" /><rect x="365.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(35, 22, 49)" fill-opacity="0.43" /><rect x="383.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="400.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="418.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" /><rect x="435.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(34, 22, 48)" fill-opacity="0.38" />
+    <rect x="34.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 66)" fill-opacity="0.50" /><rect x="51.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 69)" fill-opacity="0.55" /><rect x="68.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 32, 71)" fill-opacity="0.57" /><rect x="86.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 69)" fill-opacity="0.55" /><rect x="103.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 66)" fill-opacity="0.50" /><rect x="121.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 66)" fill-opacity="0.50" /><rect x="138.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(56, 33, 75)" fill-opacity="0.60" /><rect x="156.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(75, 33, 95)" fill-opacity="0.74" /><rect x="173.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(96, 36, 116)" fill-opacity="0.83" /><rect x="191.2" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(92, 35, 117)" fill-opacity="0.83" /><rect x="208.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(82, 34, 104)" fill-opacity="0.78" /><rect x="226.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(75, 33, 95)" fill-opacity="0.74" /><rect x="243.6" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(70, 33, 90)" fill-opacity="0.71" /><rect x="261.1" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(74, 33, 94)" fill-opacity="0.73" /><rect x="278.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(78, 33, 99)" fill-opacity="0.76" /><rect x="296.0" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(83, 34, 105)" fill-opacity="0.78" /><rect x="313.5" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(82, 34, 104)" fill-opacity="0.78" /><rect x="330.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(66, 33, 87)" fill-opacity="0.69" /><rect x="348.4" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 77)" fill-opacity="0.62" /><rect x="365.9" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 78)" fill-opacity="0.63" /><rect x="383.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 32, 73)" fill-opacity="0.59" /><rect x="400.8" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 67)" fill-opacity="0.52" /><rect x="418.3" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="435.7" y="26.0" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="34.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 67)" fill-opacity="0.52" /><rect x="51.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 32, 73)" fill-opacity="0.59" /><rect x="68.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 78)" fill-opacity="0.63" /><rect x="86.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 32, 73)" fill-opacity="0.59" /><rect x="103.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 67)" fill-opacity="0.52" /><rect x="121.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 67)" fill-opacity="0.52" /><rect x="138.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 77)" fill-opacity="0.62" /><rect x="156.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(77, 33, 97)" fill-opacity="0.75" /><rect x="173.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(92, 35, 118)" fill-opacity="0.83" /><rect x="191.2" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(93, 35, 118)" fill-opacity="0.83" /><rect x="208.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(87, 34, 111)" fill-opacity="0.80" /><rect x="226.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(83, 34, 106)" fill-opacity="0.78" /><rect x="243.6" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(87, 34, 111)" fill-opacity="0.80" /><rect x="261.1" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(123, 42, 105)" fill-opacity="0.86" /><rect x="278.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(139, 46, 99)" fill-opacity="0.88" /><rect x="296.0" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(133, 45, 101)" fill-opacity="0.88" /><rect x="313.5" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(106, 38, 112)" fill-opacity="0.85" /><rect x="330.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(78, 33, 99)" fill-opacity="0.76" /><rect x="348.4" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(61, 33, 81)" fill-opacity="0.65" /><rect x="365.9" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 32, 73)" fill-opacity="0.59" /><rect x="383.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 69)" fill-opacity="0.55" /><rect x="400.8" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 66)" fill-opacity="0.50" /><rect x="418.3" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="435.7" y="43.5" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="34.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 32, 72)" fill-opacity="0.58" /><rect x="51.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(70, 33, 90)" fill-opacity="0.71" /><rect x="68.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(85, 34, 107)" fill-opacity="0.79" /><rect x="86.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(70, 33, 90)" fill-opacity="0.71" /><rect x="103.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 32, 72)" fill-opacity="0.58" /><rect x="121.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 66)" fill-opacity="0.50" /><rect x="138.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 32, 73)" fill-opacity="0.59" /><rect x="156.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(66, 33, 87)" fill-opacity="0.69" /><rect x="173.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(79, 33, 99)" fill-opacity="0.76" /><rect x="191.2" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(81, 33, 102)" fill-opacity="0.77" /><rect x="208.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(84, 34, 106)" fill-opacity="0.79" /><rect x="226.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(87, 34, 111)" fill-opacity="0.81" /><rect x="243.6" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(140, 46, 98)" fill-opacity="0.88" /><rect x="261.1" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(234, 116, 68)" fill-opacity="0.98" /><rect x="278.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(236, 119, 68)" fill-opacity="0.98" /><rect x="296.0" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(141, 46, 98)" fill-opacity="0.89" /><rect x="313.5" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(89, 35, 114)" fill-opacity="0.82" /><rect x="330.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(80, 33, 101)" fill-opacity="0.77" /><rect x="348.4" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(62, 33, 83)" fill-opacity="0.66" /><rect x="365.9" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 69)" fill-opacity="0.55" /><rect x="383.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="400.8" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="418.3" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="435.7" y="60.9" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="34.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(57, 33, 76)" fill-opacity="0.62" /><rect x="51.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(86, 34, 109)" fill-opacity="0.80" /><rect x="68.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(162, 53, 88)" fill-opacity="0.91" /><rect x="86.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(86, 34, 109)" fill-opacity="0.80" /><rect x="103.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(57, 33, 76)" fill-opacity="0.62" /><rect x="121.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="138.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(51, 32, 68)" fill-opacity="0.53" /><rect x="156.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 77)" fill-opacity="0.62" /><rect x="173.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(71, 33, 92)" fill-opacity="0.72" /><rect x="191.2" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(83, 34, 105)" fill-opacity="0.78" /><rect x="208.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(96, 36, 116)" fill-opacity="0.83" /><rect x="226.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(97, 36, 116)" fill-opacity="0.83" /><rect x="243.6" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(152, 50, 93)" fill-opacity="0.90" /><rect x="261.1" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(252, 146, 70)" fill-opacity="1.00" /><rect x="278.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(255, 150, 70)" fill-opacity="1.00" /><rect x="296.0" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(119, 41, 107)" fill-opacity="0.86" /><rect x="313.5" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(75, 33, 95)" fill-opacity="0.74" /><rect x="330.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(67, 33, 88)" fill-opacity="0.70" /><rect x="348.4" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(59, 33, 78)" fill-opacity="0.63" /><rect x="365.9" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 32, 72)" fill-opacity="0.58" /><rect x="383.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 32, 71)" fill-opacity="0.57" /><rect x="400.8" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 69)" fill-opacity="0.55" /><rect x="418.3" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 66)" fill-opacity="0.50" /><rect x="435.7" y="78.4" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="34.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(53, 32, 71)" fill-opacity="0.57" /><rect x="51.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(66, 33, 87)" fill-opacity="0.69" /><rect x="68.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(80, 33, 100)" fill-opacity="0.76" /><rect x="86.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(66, 33, 87)" fill-opacity="0.69" /><rect x="103.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(53, 32, 71)" fill-opacity="0.57" /><rect x="121.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="138.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 67)" fill-opacity="0.52" /><rect x="156.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(56, 33, 75)" fill-opacity="0.60" /><rect x="173.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(72, 33, 92)" fill-opacity="0.72" /><rect x="191.2" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(97, 36, 116)" fill-opacity="0.83" /><rect x="208.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(146, 48, 96)" fill-opacity="0.89" /><rect x="226.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(91, 35, 117)" fill-opacity="0.83" /><rect x="243.6" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(91, 35, 116)" fill-opacity="0.82" /><rect x="261.1" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(170, 56, 84)" fill-opacity="0.91" /><rect x="278.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(185, 62, 76)" fill-opacity="0.93" /><rect x="296.0" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(93, 35, 118)" fill-opacity="0.83" /><rect x="313.5" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(69, 33, 89)" fill-opacity="0.71" /><rect x="330.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(60, 33, 81)" fill-opacity="0.65" /><rect x="348.4" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(56, 33, 75)" fill-opacity="0.60" /><rect x="365.9" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(56, 33, 75)" fill-opacity="0.60" /><rect x="383.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 78)" fill-opacity="0.63" /><rect x="400.8" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 32, 73)" fill-opacity="0.59" /><rect x="418.3" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 67)" fill-opacity="0.52" /><rect x="435.7" y="95.9" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="34.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="51.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="68.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="86.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="103.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="121.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="138.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(51, 32, 68)" fill-opacity="0.53" /><rect x="156.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 77)" fill-opacity="0.62" /><rect x="173.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(72, 33, 93)" fill-opacity="0.72" /><rect x="191.2" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(85, 34, 107)" fill-opacity="0.79" /><rect x="208.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(90, 35, 115)" fill-opacity="0.82" /><rect x="226.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(73, 33, 93)" fill-opacity="0.73" /><rect x="243.6" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(64, 33, 85)" fill-opacity="0.67" /><rect x="261.1" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(73, 33, 93)" fill-opacity="0.73" /><rect x="278.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(81, 33, 102)" fill-opacity="0.77" /><rect x="296.0" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(79, 33, 99)" fill-opacity="0.76" /><rect x="313.5" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(65, 33, 86)" fill-opacity="0.68" /><rect x="330.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(56, 33, 75)" fill-opacity="0.61" /><rect x="348.4" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 70)" fill-opacity="0.56" /><rect x="365.9" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 70)" fill-opacity="0.56" /><rect x="383.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 32, 71)" fill-opacity="0.57" /><rect x="400.8" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 69)" fill-opacity="0.55" /><rect x="418.3" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 66)" fill-opacity="0.50" /><rect x="435.7" y="113.3" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="34.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="51.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="68.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="86.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="103.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="121.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="138.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 70)" fill-opacity="0.56" /><rect x="156.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(64, 33, 85)" fill-opacity="0.67" /><rect x="173.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(78, 33, 99)" fill-opacity="0.76" /><rect x="191.2" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(73, 33, 93)" fill-opacity="0.73" /><rect x="208.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(63, 33, 84)" fill-opacity="0.67" /><rect x="226.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 77)" fill-opacity="0.62" /><rect x="243.6" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(56, 33, 75)" fill-opacity="0.60" /><rect x="261.1" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(57, 33, 76)" fill-opacity="0.61" /><rect x="278.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 77)" fill-opacity="0.62" /><rect x="296.0" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(58, 33, 77)" fill-opacity="0.62" /><rect x="313.5" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(59, 33, 79)" fill-opacity="0.63" /><rect x="330.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(55, 32, 74)" fill-opacity="0.59" /><rect x="348.4" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(53, 32, 71)" fill-opacity="0.57" /><rect x="365.9" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(54, 32, 71)" fill-opacity="0.57" /><rect x="383.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(52, 32, 69)" fill-opacity="0.55" /><rect x="400.8" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(50, 32, 66)" fill-opacity="0.50" /><rect x="418.3" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" /><rect x="435.7" y="130.8" width="14.3" height="14.3" rx="3.0" fill="rgb(49, 32, 65)" fill-opacity="0.46" />
 
     <text x="34" y="184.06666666666666" font-size="8.5" fill="#8891A6">Menos chamados</text>
     <rect x="112" y="179.06666666666666" width="264" height="5" rx="2.5" fill="url(#grad-legenda-calor)" />
@@ -1010,39 +1012,45 @@
         <div class="distrib-card__corpo-donut">
           <div class="distrib-card__donut"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
     <circle cx="100" cy="100" r="72" fill="none" stroke="#1B2338" stroke-width="24" />
-    <circle cx="100" cy="100" r="72" fill="none" stroke="#3B82F6" stroke-width="24" stroke-dasharray="106.87 345.52" stroke-dashoffset="0.00" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#8B5CF6" stroke-width="24" stroke-dasharray="93.94 358.45" stroke-dashoffset="-109.87" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#22C55E" stroke-width="24" stroke-dasharray="93.94 358.45" stroke-dashoffset="-206.81" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#F59E0B" stroke-width="24" stroke-dasharray="81.02 371.37" stroke-dashoffset="-303.75" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#EF4444" stroke-width="24" stroke-dasharray="61.63 390.76" stroke-dashoffset="-387.76" transform="rotate(-90 100 100)" />
-    <text x="100" y="97" text-anchor="middle" font-size="28" font-weight="700" fill="#EAEDF5">70</text>
+    <circle cx="100" cy="100" r="72" fill="none" stroke="#3B82F6" stroke-width="24" stroke-dasharray="91.86 360.53" stroke-dashoffset="0.00" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#8B5CF6" stroke-width="24" stroke-dasharray="62.67 389.72" stroke-dashoffset="-94.86" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#22C55E" stroke-width="24" stroke-dasharray="55.37 397.02" stroke-dashoffset="-160.53" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#F59E0B" stroke-width="24" stroke-dasharray="48.08 404.31" stroke-dashoffset="-218.90" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#EF4444" stroke-width="24" stroke-dasharray="40.78 411.61" stroke-dashoffset="-269.97" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#8891A6" stroke-width="24" stroke-dasharray="135.64 316.75" stroke-dashoffset="-313.75" transform="rotate(-90 100 100)" />
+    <text x="100" y="97" text-anchor="middle" font-size="28" font-weight="700" fill="#EAEDF5">62</text>
     <text x="100" y="117" text-anchor="middle" font-size="10.5" fill="#8891A6">Total</text>
   </svg></div>
           <div class="distrib-card__legenda">
     <div class="distrib-legenda-item">
       <span class="distrib-legenda-dot" style="background: #3B82F6;"></span>
-      <span class="distrib-legenda-nome">Hardware</span>
-      <span class="distrib-legenda-valor">17 (24%)</span>
+      <span class="distrib-legenda-nome">Impressora</span>
+      <span class="distrib-legenda-valor">13 (21%)</span>
     </div>
   
     <div class="distrib-legenda-item">
       <span class="distrib-legenda-dot" style="background: #8B5CF6;"></span>
-      <span class="distrib-legenda-nome">Acesso e Senhas</span>
-      <span class="distrib-legenda-valor">15 (21%)</span>
+      <span class="distrib-legenda-nome">Reposição</span>
+      <span class="distrib-legenda-valor">9 (15%)</span>
     </div>
   
     <div class="distrib-legenda-item">
       <span class="distrib-legenda-dot" style="background: #22C55E;"></span>
-      <span class="distrib-legenda-nome">Software</span>
-      <span class="distrib-legenda-valor">15 (21%)</span>
+      <span class="distrib-legenda-nome">Hardware</span>
+      <span class="distrib-legenda-valor">8 (13%)</span>
     </div>
   
     <div class="distrib-legenda-item">
       <span class="distrib-legenda-dot" style="background: #F59E0B;"></span>
-      <span class="distrib-legenda-nome">Impressora</span>
-      <span class="distrib-legenda-valor">13 (19%)</span>
+      <span class="distrib-legenda-nome">Rede</span>
+      <span class="distrib-legenda-valor">7 (11%)</span>
     </div>
   
     <div class="distrib-legenda-item">
       <span class="distrib-legenda-dot" style="background: #EF4444;"></span>
-      <span class="distrib-legenda-nome">Rede</span>
-      <span class="distrib-legenda-valor">10 (14%)</span>
+      <span class="distrib-legenda-nome">Sistema Interno</span>
+      <span class="distrib-legenda-valor">6 (10%)</span>
+    </div>
+  
+    <div class="distrib-legenda-item">
+      <span class="distrib-legenda-dot" style="background: #8891A6;"></span>
+      <span class="distrib-legenda-nome">Outros</span>
+      <span class="distrib-legenda-valor">19 (30%)</span>
     </div>
   </div>
         </div>
@@ -1054,27 +1062,27 @@
           <div class="distrib-card__filtro">Top 5</div>
         </div>
         <div class="distrib-card__corpo-barras"><svg class="barras-svg" viewBox="0 0 460 178" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
-    <line x1="138.4" y1="20" x2="138.4" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="138.4" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">0</text><line x1="266.2" y1="20" x2="266.2" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="266.2" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">5</text><line x1="394.0" y1="20" x2="394.0" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="394.0" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">10</text>
+    <line x1="101.1" y1="20" x2="101.1" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="101.1" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">0</text><line x1="198.7" y1="20" x2="198.7" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="198.7" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">5</text><line x1="296.4" y1="20" x2="296.4" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="296.4" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">10</text><line x1="394.0" y1="20" x2="394.0" y2="174.0" stroke="#212A3E" stroke-width="1" /><text x="394.0" y="14" text-anchor="middle" font-size="8.5" fill="#8891A6">15</text>
     
-      <text x="130.36" y="40.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Gabinete da Presidência</text>
-      <rect x="138.36" y="29.0" width="230.1" height="15" rx="4" fill="#3B82F6" />
-      <text x="450.0" y="40.0" text-anchor="end" font-size="9" fill="#8891A6">9 (13%)</text>
+      <text x="93.12" y="40.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Recursos Humanos</text>
+      <rect x="101.12" y="29.0" width="214.8" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="40.0" text-anchor="end" font-size="9" fill="#8891A6">11 (18%)</text>
     
-      <text x="130.36" y="70.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Compras</text>
-      <rect x="138.36" y="59.0" width="230.1" height="15" rx="4" fill="#3B82F6" />
-      <text x="450.0" y="70.0" text-anchor="end" font-size="9" fill="#8891A6">9 (13%)</text>
+      <text x="93.12" y="70.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">TI</text>
+      <rect x="101.12" y="59.0" width="214.8" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="70.0" text-anchor="end" font-size="9" fill="#8891A6">11 (18%)</text>
     
-      <text x="130.36" y="100.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Recepção</text>
-      <rect x="138.36" y="89.0" width="204.5" height="15" rx="4" fill="#3B82F6" />
-      <text x="450.0" y="100.0" text-anchor="end" font-size="9" fill="#8891A6">8 (11%)</text>
+      <text x="93.12" y="100.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Almoxarifado</text>
+      <rect x="101.12" y="89.0" width="175.7" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="100.0" text-anchor="end" font-size="9" fill="#8891A6">9 (15%)</text>
     
-      <text x="130.36" y="130.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Jurí­dico</text>
-      <rect x="138.36" y="119.0" width="178.9" height="15" rx="4" fill="#3B82F6" />
-      <text x="450.0" y="130.0" text-anchor="end" font-size="9" fill="#8891A6">7 (10%)</text>
+      <text x="93.12" y="130.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Legislativo</text>
+      <rect x="101.12" y="119.0" width="156.2" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="130.0" text-anchor="end" font-size="9" fill="#8891A6">8 (13%)</text>
     
-      <text x="130.36" y="160.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">TI</text>
-      <rect x="138.36" y="149.0" width="178.9" height="15" rx="4" fill="#3B82F6" />
-      <text x="450.0" y="160.0" text-anchor="end" font-size="9" fill="#8891A6">7 (10%)</text>
+      <text x="93.12" y="160.0" text-anchor="end" font-size="9.5" fill="#EAEDF5">Financeiro</text>
+      <rect x="101.12" y="149.0" width="136.7" height="15" rx="4" fill="#3B82F6" />
+      <text x="450.0" y="160.0" text-anchor="end" font-size="9" fill="#8891A6">7 (11%)</text>
     
   </svg></div>
       </div>
@@ -1086,27 +1094,27 @@
         <div class="distrib-card__corpo-donut">
           <div class="distrib-card__donut"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
     <circle cx="100" cy="100" r="72" fill="none" stroke="#1B2338" stroke-width="24" />
-    <circle cx="100" cy="100" r="72" fill="none" stroke="#22C55E" stroke-width="24" stroke-dasharray="177.96 274.43" stroke-dashoffset="0.00" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#F59E0B" stroke-width="24" stroke-dasharray="106.87 345.52" stroke-dashoffset="-180.96" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#EF4444" stroke-width="24" stroke-dasharray="158.57 293.82" stroke-dashoffset="-290.82" transform="rotate(-90 100 100)" />
-    <text x="100" y="97" text-anchor="middle" font-size="28" font-weight="700" fill="#EAEDF5">70</text>
+    <circle cx="100" cy="100" r="72" fill="none" stroke="#22C55E" stroke-width="24" stroke-dasharray="157.53 294.86" stroke-dashoffset="0.00" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#F59E0B" stroke-width="24" stroke-dasharray="201.30 251.08" stroke-dashoffset="-160.53" transform="rotate(-90 100 100)" /><circle cx="100" cy="100" r="72" fill="none" stroke="#EF4444" stroke-width="24" stroke-dasharray="84.56 367.83" stroke-dashoffset="-364.83" transform="rotate(-90 100 100)" />
+    <text x="100" y="97" text-anchor="middle" font-size="28" font-weight="700" fill="#EAEDF5">62</text>
     <text x="100" y="117" text-anchor="middle" font-size="10.5" fill="#8891A6">Total</text>
   </svg></div>
           <div class="distrib-card__legenda">
     <div class="distrib-legenda-item">
       <span class="distrib-legenda-dot" style="background: #22C55E;"></span>
       <span class="distrib-legenda-nome">Baixa</span>
-      <span class="distrib-legenda-valor">28 (40%)</span>
+      <span class="distrib-legenda-valor">22 (35%)</span>
     </div>
   
     <div class="distrib-legenda-item">
       <span class="distrib-legenda-dot" style="background: #F59E0B;"></span>
       <span class="distrib-legenda-nome">Média</span>
-      <span class="distrib-legenda-valor">17 (24%)</span>
+      <span class="distrib-legenda-valor">28 (45%)</span>
     </div>
   
     <div class="distrib-legenda-item">
       <span class="distrib-legenda-dot" style="background: #EF4444;"></span>
       <span class="distrib-legenda-nome">Alta</span>
-      <span class="distrib-legenda-valor">25 (36%)</span>
+      <span class="distrib-legenda-valor">12 (19%)</span>
     </div>
   </div>
         </div>
@@ -1124,48 +1132,12 @@
       <div class="indic-linha">
         <div class="indic-linha__badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg></div>
         <div class="indic-linha__nome">
-          <div class="indic-linha__nome-principal">Notebook Ultrafino</div>
-          <div class="indic-linha__nome-secundario">Lenovo</div>
-        </div>
-        <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">2</div>
-          <div class="indic-linha__legenda"><span class="kpi-card__delta-seta--positivo">↓ 50%</span></div>
-        </div>
-      </div>
-    
-      <div class="indic-linha">
-        <div class="indic-linha__badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg></div>
-        <div class="indic-linha__nome">
-          <div class="indic-linha__nome-principal">All-in-One</div>
-          <div class="indic-linha__nome-secundario">HP</div>
-        </div>
-        <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">2</div>
-          <div class="indic-linha__legenda"><span class="">→ 0%</span></div>
-        </div>
-      </div>
-    
-      <div class="indic-linha">
-        <div class="indic-linha__badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg></div>
-        <div class="indic-linha__nome">
-          <div class="indic-linha__nome-principal">OptiPlex 5060</div>
+          <div class="indic-linha__nome-principal">Notebook Dell</div>
           <div class="indic-linha__nome-secundario">Dell</div>
         </div>
         <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">1</div>
+          <div class="indic-linha__valor">2</div>
           <div class="indic-linha__legenda"></div>
-        </div>
-      </div>
-    
-      <div class="indic-linha">
-        <div class="indic-linha__badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg></div>
-        <div class="indic-linha__nome">
-          <div class="indic-linha__nome-principal">Notebook Ultrafino</div>
-          <div class="indic-linha__nome-secundario">Dell</div>
-        </div>
-        <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">1</div>
-          <div class="indic-linha__legenda"><span class="kpi-card__delta-seta--positivo">↓ 50%</span></div>
         </div>
       </div>
     
@@ -1176,8 +1148,20 @@
           <div class="indic-linha__nome-secundario">Samsung</div>
         </div>
         <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">2</div>
+          <div class="indic-linha__legenda"><span class="">→ 0%</span></div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8891A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg></div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Notebook</div>
+          <div class="indic-linha__nome-secundario">Positivo</div>
+        </div>
+        <div class="indic-linha__metrica">
           <div class="indic-linha__valor">1</div>
-          <div class="indic-linha__legenda"><span class="kpi-card__delta-seta--positivo">↓ 50%</span></div>
+          <div class="indic-linha__legenda"><span class="kpi-card__delta-seta--positivo">↓ 75%</span></div>
         </div>
       </div>
     </div>
@@ -1190,61 +1174,61 @@
         </div>
         <div class="indic-card__linhas" style="--escala-itens: 1.3">
       <div class="indic-linha">
-        <div class="indic-linha__avatar-iniciais">CR</div>
-        <div class="indic-linha__nome">
-          <div class="indic-linha__nome-principal">Camila Rodrigues</div>
-          <div class="indic-linha__nome-secundario">13 resolvidos</div>
-        </div>
-        <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">85%</div>
-          <div class="indic-linha__legenda">SLA</div>
-        </div>
-      </div>
-    
-      <div class="indic-linha">
-        <div class="indic-linha__avatar-iniciais">AR</div>
-        <div class="indic-linha__nome">
-          <div class="indic-linha__nome-principal">Angelo Roncalli</div>
-          <div class="indic-linha__nome-secundario">10 resolvidos</div>
-        </div>
-        <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">70%</div>
-          <div class="indic-linha__legenda">SLA</div>
-        </div>
-      </div>
-    
-      <div class="indic-linha">
         <img class="indic-linha__avatar" src="https://lh3.googleusercontent.com/a/ACg8ocJHzJucfqrm5eLaD1e0W6BmAedYTERDgJIcbfLAzpqPSDiw8w4d=s96-c" alt="" />
         <div class="indic-linha__nome">
           <div class="indic-linha__nome-principal">Iago Martins</div>
-          <div class="indic-linha__nome-secundario">9 resolvidos</div>
+          <div class="indic-linha__nome-secundario">18 resolvidos</div>
         </div>
         <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">100%</div>
+          <div class="indic-linha__valor">78%</div>
           <div class="indic-linha__legenda">SLA</div>
         </div>
       </div>
     
       <div class="indic-linha">
-        <div class="indic-linha__avatar-iniciais">PA</div>
+        <div class="indic-linha__avatar-iniciais">CL</div>
         <div class="indic-linha__nome">
-          <div class="indic-linha__nome-principal">Priscila Andrade</div>
-          <div class="indic-linha__nome-secundario">9 resolvidos</div>
-        </div>
-        <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">89%</div>
-          <div class="indic-linha__legenda">SLA</div>
-        </div>
-      </div>
-    
-      <div class="indic-linha">
-        <div class="indic-linha__avatar-iniciais">RN</div>
-        <div class="indic-linha__nome">
-          <div class="indic-linha__nome-principal">Rafael Nogueira</div>
+          <div class="indic-linha__nome-principal">Carlos Eduardo Lima</div>
           <div class="indic-linha__nome-secundario">8 resolvidos</div>
         </div>
         <div class="indic-linha__metrica">
-          <div class="indic-linha__valor">88%</div>
+          <div class="indic-linha__valor">75%</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__avatar-iniciais">DS</div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Diego Santos</div>
+          <div class="indic-linha__nome-secundario">6 resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">83%</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__avatar-iniciais">IS</div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Iago Martins Silva</div>
+          <div class="indic-linha__nome-secundario">5 resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">60%</div>
+          <div class="indic-linha__legenda">SLA</div>
+        </div>
+      </div>
+    
+      <div class="indic-linha">
+        <div class="indic-linha__avatar-iniciais">ER</div>
+        <div class="indic-linha__nome">
+          <div class="indic-linha__nome-principal">Eduardo Ribeiro</div>
+          <div class="indic-linha__nome-secundario">5 resolvidos</div>
+        </div>
+        <div class="indic-linha__metrica">
+          <div class="indic-linha__valor">60%</div>
           <div class="indic-linha__legenda">SLA</div>
         </div>
       </div>
@@ -1259,15 +1243,15 @@
           <div class="indic-card__gauge-anel"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', -apple-system, Arial, sans-serif">
     
       <circle cx="100" cy="100" r="82" fill="none" stroke="#1B2338" stroke-width="13" />
-      <circle cx="100" cy="100" r="82" fill="none" stroke="#EF4444" stroke-width="13" stroke-linecap="round" stroke-dasharray="401.87 113.35" transform="rotate(-90 100 100)" />
+      <circle cx="100" cy="100" r="82" fill="none" stroke="#EF4444" stroke-width="13" stroke-linecap="round" stroke-dasharray="324.59 190.63" transform="rotate(-90 100 100)" />
     
       <circle cx="100" cy="100" r="64" fill="none" stroke="#1B2338" stroke-width="13" />
-      <circle cx="100" cy="100" r="64" fill="none" stroke="#F59E0B" stroke-width="13" stroke-linecap="round" stroke-dasharray="345.83 56.30" transform="rotate(-90 100 100)" />
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#F59E0B" stroke-width="13" stroke-linecap="round" stroke-dasharray="317.68 84.45" transform="rotate(-90 100 100)" />
     
       <circle cx="100" cy="100" r="46" fill="none" stroke="#1B2338" stroke-width="13" />
-      <circle cx="100" cy="100" r="46" fill="none" stroke="#22C55E" stroke-width="13" stroke-linecap="round" stroke-dasharray="257.23 31.79" transform="rotate(-90 100 100)" />
+      <circle cx="100" cy="100" r="46" fill="none" stroke="#22C55E" stroke-width="13" stroke-linecap="round" stroke-dasharray="208.10 80.93" transform="rotate(-90 100 100)" />
     
-    <text x="100" y="97" text-anchor="middle" font-size="24" font-weight="700" fill="#EAEDF5">84%</text>
+    <text x="100" y="97" text-anchor="middle" font-size="24" font-weight="700" fill="#EAEDF5">73%</text>
     <text x="100" y="116" text-anchor="middle" font-size="8.5" fill="#8891A6">SLA geral</text>
   </svg></div>
           
@@ -1277,21 +1261,21 @@
           <span class="sla-prioridade-nome">
             <span class="sla-prioridade-dot" style="background: #EF4444; display:inline-block; margin-right:4px; vertical-align:middle;"></span>Alta
           </span>
-          <span class="sla-prioridade-fracao">78% (14/18)</span>
+          <span class="sla-prioridade-fracao">63% (5/8)</span>
         </div>
       
         <div class="sla-prioridade-item">
           <span class="sla-prioridade-nome">
             <span class="sla-prioridade-dot" style="background: #F59E0B; display:inline-block; margin-right:4px; vertical-align:middle;"></span>Média
           </span>
-          <span class="sla-prioridade-fracao">86% (12/14)</span>
+          <span class="sla-prioridade-fracao">79% (15/19)</span>
         </div>
       
         <div class="sla-prioridade-item">
           <span class="sla-prioridade-nome">
             <span class="sla-prioridade-dot" style="background: #22C55E; display:inline-block; margin-right:4px; vertical-align:middle;"></span>Baixa
           </span>
-          <span class="sla-prioridade-fracao">89% (17/19)</span>
+          <span class="sla-prioridade-fracao">72% (13/18)</span>
         </div>
       
     </div>
@@ -1307,22 +1291,22 @@
       <div class="resumo-inteligente__lista">
     <div class="resumo-inteligente__item">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>
-      <div class="resumo-inteligente__item-texto">Durante Julho de 2026 foram registrados 70 chamados, um redução de 26% em relação ao mês anterior.</div>
+      <div class="resumo-inteligente__item-texto">Durante Julho de 2026 foram registrados 62 chamados, um redução de 43% em relação ao mês anterior.</div>
     </div>
   
     <div class="resumo-inteligente__item">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>
-      <div class="resumo-inteligente__item-texto">O setor Gabinete da Presidência concentrou a maior demanda (9 chamados), enquanto a categoria Hardware permaneceu como a principal origem dos incidentes.</div>
+      <div class="resumo-inteligente__item-texto">O setor Recursos Humanos concentrou a maior demanda (11 chamados), enquanto a categoria Impressora permaneceu como a principal origem dos incidentes.</div>
     </div>
   
     <div class="resumo-inteligente__item">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
-      <div class="resumo-inteligente__item-texto">O cumprimento de SLA foi de 84%, abaixo da meta definida (90%), e o tempo médio de resolução caiu para 20h 11m, indicando melhora na eficiência da equipe.</div>
+      <div class="resumo-inteligente__item-texto">O cumprimento de SLA foi de 73%, abaixo da meta definida (90%), e o tempo médio de resolução subiu para 1d 6h, indicando atenção necessária na eficiência da equipe.</div>
     </div>
   
     <div class="resumo-inteligente__item">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>
-      <div class="resumo-inteligente__item-texto">Observou-se concentração de chamados no período da manhã de segunda-feira, sugerindo um pico operacional recorrente.</div>
+      <div class="resumo-inteligente__item-texto">Observou-se concentração de chamados no período da tarde de quarta-feira, sugerindo um pico operacional recorrente.</div>
     </div>
   </div>
     </section>
@@ -1345,44 +1329,44 @@
         <tbody>
       <tr>
         <td>Total de chamados</td>
-        <td>70</td>
-        <td>95</td>
-        <td><span class="comparativo-tabela__variacao--negativo">↓ 26%</span></td>
+        <td>62</td>
+        <td>109</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↓ 43%</span></td>
       </tr>
     
       <tr>
         <td>Resolvidos</td>
-        <td>51</td>
-        <td>71</td>
-        <td><span class="comparativo-tabela__variacao--negativo">↓ 28%</span></td>
+        <td>45</td>
+        <td>92</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↓ 51%</span></td>
       </tr>
     
       <tr>
         <td>Tempo médio de resolução</td>
-        <td>20h 11m</td>
-        <td>23h 11m</td>
-        <td><span class="comparativo-tabela__variacao--positivo">↓ 13%</span></td>
+        <td>1d 6h</td>
+        <td>18h 42m</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↑ 65%</span></td>
       </tr>
     
       <tr>
         <td>Tempo médio 1ª resposta</td>
-        <td>8h 38m</td>
-        <td>8h 34m</td>
-        <td><span class="comparativo-tabela__variacao--negativo">↑ 1%</span></td>
+        <td>9h 26m</td>
+        <td>6h 36m</td>
+        <td><span class="comparativo-tabela__variacao--negativo">↑ 43%</span></td>
       </tr>
     
       <tr>
         <td>SLA cumprido</td>
+        <td>73%</td>
         <td>84%</td>
-        <td>83%</td>
-        <td><span class="comparativo-tabela__variacao--positivo">↑ 1 p.p.</span></td>
+        <td><span class="comparativo-tabela__variacao--negativo">↓ 11%</span></td>
       </tr>
     
       <tr>
         <td>Backlog</td>
-        <td>19</td>
-        <td>24</td>
-        <td><span class="comparativo-tabela__variacao--positivo">↓ 21%</span></td>
+        <td>17</td>
+        <td>17</td>
+        <td><span class="">→ 0%</span></td>
       </tr>
     </tbody>
       </table>

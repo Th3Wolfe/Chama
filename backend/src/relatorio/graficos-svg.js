@@ -40,9 +40,10 @@ function lerp(a, b, t) {
 // coral). Os stops abaixo replicam as cores reais do design, não são mais
 // inventados/aproximados.
 const PARADAS_CALOR = [
-  { t: 0, rgb: [34, 22, 48] },      // sem chamados — plum escuro e quente (era indigo/azul frio)
-  { t: 0.166, rgb: [46, 24, 66] },
-  { t: 0.333, rgb: [66, 28, 88] },
+  { t: 0, rgb: [49, 32, 65] },       // sem chamados — meio-termo: original [34,22,48] sumia contra o
+                                      // fundo do card, [64,42,82] ficou parecido demais com os tons médios
+  { t: 0.166, rgb: [62, 33, 83] },
+  { t: 0.333, rgb: [78, 33, 98] },
   { t: 0.5, rgb: [92, 35, 118] },   // roxo
   { t: 0.667, rgb: [148, 48, 95] }, // magenta
   { t: 0.833, rgb: [206, 70, 66] }, // vermelho puro (era [216, 91, 71], verde a mais deixava "sujo")
@@ -115,22 +116,13 @@ function gerarGraficoLinha(serieDiaria) {
     rotulosX += `<text x="${x(i).toFixed(1)}" y="${altura - 6}" text-anchor="middle" font-size="8.5" fill="#8891A6">${formatarDataCurta(serieDiaria[i].dia)}</text>`;
   });
 
-  // Ponto de destaque: dia de maior volume no mês, com callout fixo (data +
-  // "X chamados") posicionado acima do ponto, com cuidado pra não estourar
-  // as bordas do viewBox.
+  // Ponto de destaque: dia de maior volume no mês. Apenas um círculo
+  // marcando o ponto, sem callout de texto fixo.
   let indicePico = 0;
   serieDiaria.forEach((p, i) => { if (p.total > serieDiaria[indicePico].total) indicePico = i; });
   const pico = serieDiaria[indicePico];
   const pxPico = x(indicePico);
   const pyPico = y(pico.total);
-  const calloutTexto1 = formatarDataLonga(pico.dia);
-  const calloutTexto2 = `${pico.total} chamados`;
-  const calloutLargura = 96;
-  const calloutAltura = 34;
-  let calloutX = pxPico - calloutLargura / 2;
-  calloutX = Math.max(margem.esquerda, Math.min(largura - margem.direita - calloutLargura, calloutX));
-  let calloutY = pyPico - calloutAltura - 12;
-  if (calloutY < 2) calloutY = pyPico + 12; // se o pico for muito no topo, mostra o callout abaixo do ponto
 
   const temPico = pico.total > 0;
 
@@ -154,9 +146,6 @@ function gerarGraficoLinha(serieDiaria) {
 
     ${temPico ? `
       <circle cx="${pxPico.toFixed(1)}" cy="${pyPico.toFixed(1)}" r="4" fill="#0A0E18" stroke="#3B82F6" stroke-width="2" />
-      <rect x="${calloutX.toFixed(1)}" y="${calloutY.toFixed(1)}" width="${calloutLargura}" height="${calloutAltura}" rx="6" fill="#1B2338" stroke="#3B82F6" stroke-width="1" />
-      <text x="${(calloutX + calloutLargura / 2).toFixed(1)}" y="${(calloutY + 14).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#EAEDF5">${calloutTexto1}</text>
-      <text x="${(calloutX + calloutLargura / 2).toFixed(1)}" y="${(calloutY + 26).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="#8891A6">${calloutTexto2}</text>
     ` : ''}
   </svg>`;
 }
@@ -239,10 +228,11 @@ function gerarHeatmap(heatmapData) {
       const cor = interpolarCorCalor(t);
       // Opacidade acompanha o calor: perto de 0 a célula esmaece bastante,
       // mas OPACIDADE_MIN garante que ainda dê pra enxergar contra o fundo do
-      // card (não é mais 0.12 → sumia quase por completo). A curva (raiz,
-      // não linear) reforça os valores baixos/médios sem achatar o topo da
-      // escala, que continua chegando em opacidade 1.
-      const OPACIDADE_MIN = 0.38;
+      // card. 0.38 sumia quase por completo; 0.55 deixava a célula fria
+      // parecida demais com os tons médios. 0.46 é o meio-termo. A curva
+      // (raiz, não linear) reforça os valores baixos/médios sem achatar o
+      // topo da escala, que continua chegando em opacidade 1.
+      const OPACIDADE_MIN = 0.46;
       const opacidade = OPACIDADE_MIN + (1 - OPACIDADE_MIN) * Math.pow(t, 0.55);
       const cx = margemEsquerda + col * colWidth;
       const w = lado.toFixed(1);

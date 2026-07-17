@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { buscarDadosRelatorio } = require('../src/relatorio/dados');
 const { gerarHtmlRelatorio } = require('../src/relatorio/template');
-const { gerarPdfRelatorio, encerrarBrowser } = require('../src/relatorio/pdf');
+const { gerarPdfRelatorioUmaPagina, encerrarBrowser } = require('../src/relatorio/pdf');
 const pool = require('../src/db');
 
 async function main() {
@@ -15,16 +15,16 @@ async function main() {
   console.log(`Buscando dados do relatório para: ${mes || '(mês atual)'}`);
   const dados = await buscarDadosRelatorio(mes);
 
-  console.log('Gerando HTML...');
-  const html = gerarHtmlRelatorio(dados);
+  console.log('Gerando HTML (modo página única)...');
+  const html = gerarHtmlRelatorio(dados, { paginaUnica: true });
 
   console.log('Abrindo Chromium e gerando PDF (pode levar alguns segundos)...');
-  const pdfBuffer = await gerarPdfRelatorio(html);
+  const pdfBuffer = await gerarPdfRelatorioUmaPagina(html);
 
   const saida = path.join(__dirname, `relatorio-preview-${dados.periodo.mes_ref}.pdf`);
   fs.writeFileSync(saida, pdfBuffer);
   console.log(`PDF gerado em: ${saida}`);
-  console.log('Abra esse arquivo pra conferir paginação, rodapé repetido e fundo escuro.');
+  console.log('Abra esse arquivo pra conferir se ficou tudo numa página só, sem rodapé repetido.');
 }
 
 main()
